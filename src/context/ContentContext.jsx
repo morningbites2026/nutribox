@@ -6,11 +6,12 @@ const ContentContext = createContext();
 // Mock Initial Data for LocalStorage fallback
 const defaultSettings = {
   business_name: 'Nutribox',
+  logo_url: '',
   hero_title: 'Fresh, Chef-Crafted Salad Plans Delivered to Your Door',
   hero_subtitle: 'Premium subscription-based healthy meal plans made with 100% organic ingredients, tailored to your dietary goals.',
   contact_email: 'hello@nutribox.com',
-  contact_phone: '+1 (555) 123-4567',
-  contact_address: '123 Green Avenue, Fresh Meadows, CA 90210',
+  contact_phone: '+91 98765 43210',
+  contact_address: '123 Green Avenue, Sector 5, HSR Layout, Bangalore, Karnataka 560102',
   business_hours: 'Mon - Sat: 8:00 AM - 6:00 PM',
   admin_passcode: 'admin123'
 };
@@ -20,9 +21,10 @@ const defaultPlans = [
     id: '1',
     title: 'Lean & Green',
     description: 'Designed for weight loss and detoxification. High in fiber, low in carbs, and packed with fresh leafy greens.',
-    price_weekly: 39.99,
-    price_monthly: 149.99,
-    calories: 320,
+    price_weekly: 699,
+    price_monthly: 2499,
+    price_pack: 400,
+    pack_name: '10 Pack',
     ingredients: ['Baby Spinach', 'Arugula', 'Cucumber', 'Cherry Tomatoes', 'Avocado', 'Pumpkin Seeds', 'Lemon Vinaigrette'],
     tags: ['Low Carb', 'Weight Loss', 'Vegan'],
     image_url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600'
@@ -31,9 +33,10 @@ const defaultPlans = [
     id: '2',
     title: 'Protein Powerhouse',
     description: 'Rich in clean proteins to support muscle growth and recovery. Balanced with wholesome grains and nuts.',
-    price_weekly: 49.99,
-    price_monthly: 189.99,
-    calories: 540,
+    price_weekly: 899,
+    price_monthly: 3199,
+    price_pack: 500,
+    pack_name: '10 Pack',
     ingredients: ['Grilled Chicken Breast', 'Quinoa', 'Mixed Greens', 'Broccoli Florets', 'Feta Cheese', 'Almonds', 'Tahini Dressing'],
     tags: ['High Protein', 'Gluten Free', 'Active Lifestyle'],
     image_url: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=600'
@@ -42,9 +45,10 @@ const defaultPlans = [
     id: '3',
     title: 'Keto Balance',
     description: 'High healthy fats, moderate protein, and ultra-low carbs. Kept delicious with premium cheeses and dressings.',
-    price_weekly: 45.99,
-    price_monthly: 169.99,
-    calories: 480,
+    price_weekly: 849,
+    price_monthly: 2999,
+    price_pack: 450,
+    pack_name: '10 Pack',
     ingredients: ['Smoked Salmon', 'Hard Boiled Egg', 'Spinach', 'Kale', 'Avocado', 'Walnuts', 'Olive Oil & Herbs'],
     tags: ['Keto', 'High Fat', 'Gluten Free'],
     image_url: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600'
@@ -209,7 +213,8 @@ export const ContentProvider = ({ children }) => {
           description: newPlan.description,
           price_weekly: parseFloat(newPlan.price_weekly),
           price_monthly: parseFloat(newPlan.price_monthly),
-          calories: parseInt(newPlan.calories) || 0,
+          price_pack: parseFloat(newPlan.price_pack) || 0,
+          pack_name: newPlan.pack_name || '10 Pack',
           ingredients: newPlan.ingredients,
           tags: newPlan.tags,
           image_url: newPlan.image_url
@@ -246,7 +251,8 @@ export const ContentProvider = ({ children }) => {
           description: updatedPlan.description,
           price_weekly: parseFloat(updatedPlan.price_weekly),
           price_monthly: parseFloat(updatedPlan.price_monthly),
-          calories: parseInt(updatedPlan.calories) || 0,
+          price_pack: parseFloat(updatedPlan.price_pack) || 0,
+          pack_name: updatedPlan.pack_name || '10 Pack',
           ingredients: updatedPlan.ingredients,
           tags: updatedPlan.tags,
           image_url: updatedPlan.image_url

@@ -45,7 +45,7 @@ const Plans = () => {
             Explore our chef-curated subscription plans. Get fresh, calorie-counted, nutritionally balanced salads delivered daily.
           </p>
 
-          {/* Weekly / Monthly Toggle */}
+          {/* Weekly / Monthly / Fix Pack Toggle */}
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -87,6 +87,22 @@ const Plans = () => {
             >
               Monthly
             </button>
+            <button
+              onClick={() => setBillingPeriod('pack')}
+              style={{
+                padding: '10px 24px',
+                borderRadius: 'var(--radius-full)',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '14px',
+                transition: 'var(--transition-smooth)',
+                backgroundColor: billingPeriod === 'pack' ? 'var(--primary)' : 'transparent',
+                color: billingPeriod === 'pack' ? '#ffffff' : 'var(--text-muted)'
+              }}
+            >
+              Fix Pack
+            </button>
           </div>
           <p style={{
             fontSize: '12px',
@@ -94,15 +110,23 @@ const Plans = () => {
             color: 'var(--accent)',
             marginTop: '8px'
           }}>
-            🔥 Save up to 15% on monthly plans!
+            🔥 Save more with monthly subscriptions or flexible fixed packs!
           </p>
         </div>
 
         {/* Salad Cards Grid */}
         <div className="grid-responsive">
           {saladPlans.map((plan) => {
-            const isMonthly = billingPeriod === 'monthly';
-            const price = isMonthly ? plan.price_monthly : plan.price_weekly;
+            let priceLabel = 'Per Week';
+            let price = plan.price_weekly;
+
+            if (billingPeriod === 'monthly') {
+              priceLabel = 'Per Month';
+              price = plan.price_monthly;
+            } else if (billingPeriod === 'pack') {
+              priceLabel = `For ${plan.pack_name || '10 Pack'}`;
+              price = plan.price_pack;
+            }
             
             return (
               <div 
@@ -135,24 +159,20 @@ const Plans = () => {
                     onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
                     onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
                   />
-                  {plan.calories && (
+                  {billingPeriod === 'pack' && plan.pack_name && (
                     <div style={{
                       position: 'absolute',
                       top: '16px',
                       right: '16px',
-                      backgroundColor: 'rgba(0,0,0,0.6)',
-                      backdropFilter: 'blur(4px)',
+                      backgroundColor: 'var(--primary)',
                       color: '#ffffff',
-                      padding: '4px 10px',
+                      padding: '4px 12px',
                       borderRadius: 'var(--radius-full)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
                       fontSize: '12px',
-                      fontWeight: 600
+                      fontWeight: 600,
+                      boxShadow: 'var(--shadow-sm)'
                     }}>
-                      <Flame size={14} style={{ color: 'var(--accent)' }} />
-                      <span>{plan.calories} kcal</span>
+                      <span>{plan.pack_name}</span>
                     </div>
                   )}
                 </div>
@@ -245,11 +265,11 @@ const Plans = () => {
                   }}>
                     <div>
                       <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-                        {isMonthly ? 'Per Month' : 'Per Week'}
+                        {priceLabel}
                       </span>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px' }}>
                         <span style={{ fontSize: '28px', fontWeight: 800, color: 'var(--primary)' }}>
-                          ${price}
+                          ₹{price}
                         </span>
                       </div>
                     </div>

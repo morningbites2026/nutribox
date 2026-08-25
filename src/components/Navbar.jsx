@@ -85,8 +85,18 @@ const Navbar = () => {
           fontSize: '22px',
           letterSpacing: '-0.5px'
         }}>
-          <Leaf style={{ width: '28px', height: '28px', fill: 'currentColor' }} />
-          <span>{businessName}</span>
+          {siteSettings.logo_url ? (
+            <img 
+              src={siteSettings.logo_url} 
+              alt={businessName} 
+              style={{ maxHeight: '45px', maxWidth: '180px', objectFit: 'contain' }} 
+            />
+          ) : (
+            <>
+              <Leaf style={{ width: '28px', height: '28px', fill: 'currentColor' }} />
+              <span>{businessName}</span>
+            </>
+          )}
         </Link>
 
         {/* Desktop Links */}
@@ -97,17 +107,11 @@ const Navbar = () => {
         }} className="desktop-menu">
           <a href="#hero" onClick={(e) => handleNavClick(e, 'hero')} style={navLinkStyle}>Home</a>
           <a href="#plans" onClick={(e) => handleNavClick(e, 'plans')} style={navLinkStyle}>Our Plans</a>
-          <a href="#bowl-builder" onClick={(e) => handleNavClick(e, 'bowl-builder')} style={navLinkStyle}>Bowl Builder</a>
           <a href="#contact" onClick={(e) => handleNavClick(e, 'contact')} style={navLinkStyle}>Contact</a>
           
           <button onClick={toggleTheme} style={iconBtnStyle} title="Toggle Theme">
             {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
           </button>
-          
-          <Link to="/admin" style={adminLinkStyle} title="Admin Dashboard">
-            <Settings size={20} />
-            <span>Admin</span>
-          </Link>
         </div>
 
         {/* Mobile controls toggle */}
@@ -143,19 +147,7 @@ const Navbar = () => {
         }}>
           <a href="#hero" onClick={(e) => handleNavClick(e, 'hero')} style={mobileNavLinkStyle}>Home</a>
           <a href="#plans" onClick={(e) => handleNavClick(e, 'plans')} style={mobileNavLinkStyle}>Our Plans</a>
-          <a href="#bowl-builder" onClick={(e) => handleNavClick(e, 'bowl-builder')} style={mobileNavLinkStyle}>Bowl Builder</a>
           <a href="#contact" onClick={(e) => handleNavClick(e, 'contact')} style={mobileNavLinkStyle}>Contact</a>
-          <Link to="/admin" onClick={() => setIsOpen(false)} style={{
-            ...mobileNavLinkStyle,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            color: 'var(--primary)',
-            fontWeight: 600
-          }}>
-            <Settings size={20} />
-            <span>Admin Dashboard</span>
-          </Link>
         </div>
       )}
 

@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Plans from './components/Plans';
-import BowlBuilder from './components/BowlBuilder';
 import Footer from './components/Footer';
 import AdminPanel from './components/AdminPanel';
 import { useContent } from './context/ContentContext';
@@ -14,7 +13,6 @@ function LandingPage() {
       <Navbar />
       <Hero />
       <Plans />
-      <BowlBuilder />
       <Footer />
     </>
   );

@@ -108,10 +108,10 @@ const Hero = () => {
               <ArrowRight size={18} />
             </button>
             <button 
-              onClick={() => scrollToSection('bowl-builder')} 
+              onClick={() => scrollToSection('contact')} 
               className="btn btn-secondary"
             >
-              Build Your Own Bowl
+              Contact Us
             </button>
           </div>
 

@@ -31,7 +31,8 @@ const AdminPanel = () => {
     description: '',
     price_weekly: '',
     price_monthly: '',
-    calories: '',
+    price_pack: '',
+    pack_name: '10 Pack',
     image_url: '',
     ingredients_raw: '',
     tags_raw: ''
@@ -40,6 +41,7 @@ const AdminPanel = () => {
   // Settings form state
   const [settingsForm, setSettingsForm] = useState({
     business_name: '',
+    logo_url: '',
     hero_title: '',
     hero_subtitle: '',
     contact_email: '',
@@ -54,6 +56,7 @@ const AdminPanel = () => {
     if (siteSettings) {
       setSettingsForm({
         business_name: siteSettings.business_name || '',
+        logo_url: siteSettings.logo_url || '',
         hero_title: siteSettings.hero_title || '',
         hero_subtitle: siteSettings.hero_subtitle || '',
         contact_email: siteSettings.contact_email || '',
@@ -119,7 +122,8 @@ const AdminPanel = () => {
       description: plan.description || '',
       price_weekly: plan.price_weekly || '',
       price_monthly: plan.price_monthly || '',
-      calories: plan.calories || '',
+      price_pack: plan.price_pack || '',
+      pack_name: plan.pack_name || '10 Pack',
       image_url: plan.image_url || '',
       ingredients_raw: plan.ingredients ? plan.ingredients.join(', ') : '',
       tags_raw: plan.tags ? plan.tags.join(', ') : ''
@@ -134,7 +138,8 @@ const AdminPanel = () => {
       description: '',
       price_weekly: '',
       price_monthly: '',
-      calories: '',
+      price_pack: '',
+      pack_name: '10 Pack',
       image_url: '',
       ingredients_raw: '',
       tags_raw: ''
@@ -156,7 +161,8 @@ const AdminPanel = () => {
       description: planForm.description,
       price_weekly: parseFloat(planForm.price_weekly),
       price_monthly: parseFloat(planForm.price_monthly),
-      calories: parseInt(planForm.calories) || 0,
+      price_pack: parseFloat(planForm.price_pack) || 0,
+      pack_name: planForm.pack_name || '10 Pack',
       image_url: planForm.image_url || 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600',
       ingredients: planForm.ingredients_raw.split(',').map(i => i.trim()).filter(Boolean),
       tags: planForm.tags_raw.split(',').map(t => t.trim()).filter(Boolean)
@@ -444,7 +450,7 @@ const AdminPanel = () => {
                           <th>Salad Plan Title</th>
                           <th>Weekly Price</th>
                           <th>Monthly Price</th>
-                          <th>Kcal</th>
+                          <th>Fix Pack Price</th>
                           <th style={{ textAlign: 'right' }}>Actions</th>
                         </tr>
                       </thead>
@@ -462,9 +468,9 @@ const AdminPanel = () => {
                               <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{plan.title}</div>
                               <div style={{ fontSize: '11px', color: 'var(--text-muted)', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '300px' }}>{plan.description}</div>
                             </td>
-                            <td style={{ fontWeight: 600 }}>${plan.price_weekly}</td>
-                            <td style={{ fontWeight: 600 }}>${plan.price_monthly}</td>
-                            <td>{plan.calories || '-'}</td>
+                            <td style={{ fontWeight: 600 }}>₹{plan.price_weekly}</td>
+                            <td style={{ fontWeight: 600 }}>₹{plan.price_monthly}</td>
+                            <td>₹{plan.price_pack || 0} ({plan.pack_name || '10 Pack'})</td>
                             <td style={{ textAlign: 'right' }}>
                               <div style={{ display: 'inline-flex', gap: '8px' }}>
                                 <button 
@@ -537,38 +543,49 @@ const AdminPanel = () => {
                     />
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }} className="price-inputs">
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px' }} className="price-inputs">
                     <div className="admin-input-group">
-                      <label className="admin-label">Weekly Price ($) *</label>
+                      <label className="admin-label">Weekly Price (₹) *</label>
                       <input 
                         type="number" 
                         step="0.01"
                         value={planForm.price_weekly}
                         onChange={(e) => setPlanForm({...planForm, price_weekly: e.target.value})}
-                        placeholder="39.99"
+                        placeholder="699"
                         className="admin-input"
                         required
                       />
                     </div>
                     <div className="admin-input-group">
-                      <label className="admin-label">Monthly Price ($) *</label>
+                      <label className="admin-label">Monthly Price (₹) *</label>
                       <input 
                         type="number" 
                         step="0.01"
                         value={planForm.price_monthly}
                         onChange={(e) => setPlanForm({...planForm, price_monthly: e.target.value})}
-                        placeholder="149.99"
+                        placeholder="2499"
                         className="admin-input"
                         required
                       />
                     </div>
                     <div className="admin-input-group">
-                      <label className="admin-label">Estimated Calories (kcal)</label>
+                      <label className="admin-label">Pack Price (₹)</label>
                       <input 
                         type="number" 
-                        value={planForm.calories}
-                        onChange={(e) => setPlanForm({...planForm, calories: e.target.value})}
-                        placeholder="350"
+                        step="0.01"
+                        value={planForm.price_pack}
+                        onChange={(e) => setPlanForm({...planForm, price_pack: e.target.value})}
+                        placeholder="400"
+                        className="admin-input"
+                      />
+                    </div>
+                    <div className="admin-input-group">
+                      <label className="admin-label">Pack Name</label>
+                      <input 
+                        type="text" 
+                        value={planForm.pack_name}
+                        onChange={(e) => setPlanForm({...planForm, pack_name: e.target.value})}
+                        placeholder="10 Pack"
                         className="admin-input"
                       />
                     </div>
@@ -631,6 +648,20 @@ const AdminPanel = () => {
                   onChange={(e) => setSettingsForm({...settingsForm, business_name: e.target.value})}
                   className="admin-input"
                 />
+              </div>
+
+              <div className="admin-input-group">
+                <label className="admin-label">Site Logo URL</label>
+                <input 
+                  type="text" 
+                  value={settingsForm.logo_url}
+                  onChange={(e) => setSettingsForm({...settingsForm, logo_url: e.target.value})}
+                  placeholder="https://example.com/logo.png"
+                  className="admin-input"
+                />
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  💡 Suggested Size: For horizontal logos, use dimensions around <strong>180px width × 50px height</strong> (or aspect ratio ~3.5:1). For square icons, <strong>40px × 40px</strong> is recommended.
+                </span>
               </div>
 
               <div className="admin-input-group">
