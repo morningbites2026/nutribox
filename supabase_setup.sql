@@ -1,24 +1,20 @@
--- SQL Script to Set Up Supabase Database for Nutribox
--- Copy and paste this into the Supabase SQL Editor (Dashboard -> SQL Editor -> New Query)
+-- SQL Script to Set Up Supabase Database for Nutribox (Safe Migration Mode)
+-- Copy and paste this into the Supabase SQL Editor.
+-- NOTE: This script does NOT drop the 'salads' table to preserve your added salads!
 
--- 1. Drop existing tables if they exist (clean start)
-DROP TABLE IF EXISTS salad_plans;
-DROP TABLE IF EXISTS salads;
-DROP TABLE IF EXISTS site_settings;
-
--- 2. Create site_settings table
-CREATE TABLE site_settings (
+-- 1. Create site_settings table if it doesn't exist
+CREATE TABLE IF NOT EXISTS site_settings (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
 );
 
--- 3. Create salads table (Individual salads)
-CREATE TABLE salads (
+-- 2. Create salads table if it doesn't exist (PRESERVES existing salads)
+CREATE TABLE IF NOT EXISTS salads (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
     description TEXT,
-    variant_support TEXT DEFAULT 'both', -- 'half', 'full', 'both'
+    variant_support TEXT DEFAULT 'both',
     price_half NUMERIC DEFAULT 0,
     price_full NUMERIC DEFAULT 0,
     image_url TEXT,
@@ -27,18 +23,26 @@ CREATE TABLE salads (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
 );
 
--- 4. Create salad_plans table (Combos)
+-- 3. Run column additions to ensure salads table matches the schema format
+ALTER TABLE salads ADD COLUMN IF NOT EXISTS variant_support TEXT DEFAULT 'both';
+ALTER TABLE salads ADD COLUMN IF NOT EXISTS price_half NUMERIC DEFAULT 0;
+ALTER TABLE salads ADD COLUMN IF NOT EXISTS price_full NUMERIC DEFAULT 0;
+
+-- 4. Recreate salad_plans (Combos & Single plans)
+DROP TABLE IF EXISTS salad_plans;
 CREATE TABLE salad_plans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
     description TEXT,
-    price_half NUMERIC NOT NULL DEFAULT 0,
-    price_full NUMERIC NOT NULL DEFAULT 0,
-    salad_items TEXT[] DEFAULT '{}', -- stores '[salad_id]:[variant]'
+    plan_type TEXT DEFAULT 'combo', -- 'individual' or 'combo'
+    price NUMERIC NOT NULL DEFAULT 0,
+    meals_count INTEGER NOT NULL DEFAULT 10,
+    salad_items TEXT[] DEFAULT '{}',
+    image_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
 );
 
--- 5. Insert Default Site Settings
+-- 5. Insert Default Site Settings if not present
 INSERT INTO site_settings (key, value) VALUES
 ('business_name', 'Nutribox'),
 ('logo_url', ''),
@@ -51,38 +55,38 @@ INSERT INTO site_settings (key, value) VALUES
 ('admin_passcode', 'admin123')
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
--- 6. Insert Default Salads with Half & Full prices
-INSERT INTO salads (id, title, description, variant_support, price_half, price_full, ingredients, tags, image_url) VALUES
-('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Garden Greens Salad', 'Fresh leafy greens, cucumber, tomatoes, and organic seeds.', 'both', 100, 180, ARRAY['Baby Spinach', 'Arugula', 'Cucumber', 'Cherry Tomatoes', 'Pumpkin Seeds', 'Lemon Vinaigrette'], ARRAY['Low Carb', 'Vegan', 'Organic'], 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600'),
-('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12', 'Protein Booster Salad', 'Grilled chicken breast with almonds, greens, and broccoli.', 'both', 150, 260, ARRAY['Grilled Chicken Breast', 'Mixed Greens', 'Broccoli Florets', 'Almonds', 'Tahini Dressing'], ARRAY['High Protein', 'Gluten Free'], 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=600'),
-('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13', 'Keto Smoked Salmon', 'High healthy fats from smoked salmon, hard boiled egg, and walnuts.', 'both', 170, 290, ARRAY['Smoked Salmon', 'Hard Boiled Egg', 'Spinach', 'Kale', 'Avocado', 'Walnuts', 'Olive Oil & Herbs'], ARRAY['Keto', 'High Fat', 'Gluten Free'], 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600'),
-('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14', 'Feta Berry Crunch', 'Vegetarian delight with crumbled feta, fresh berries, and walnuts.', 'both', 120, 200, ARRAY['Feta Cheese', 'Strawberries', 'Spinach', 'Walnuts', 'Balsamic Vinaigrette'], ARRAY['Vegetarian', 'Gluten Free'], 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&q=80&w=600');
-
--- 7. Insert Default Combos (Plans)
-INSERT INTO salad_plans (title, description, price_half, price_full, salad_items) VALUES
+-- 6. Insert Default Salad Plans (Relational seeds matching default salads)
+-- Note: Using default salad UUID keys for compatibility
+INSERT INTO salad_plans (title, description, plan_type, price, meals_count, salad_items, image_url) VALUES
 (
-  'Detox & Greens Combo', 
-  'Combines our detoxifying Garden Greens (Half Pack) and Feta Berry Crunch (Full Pack).', 
-  220, 
-  380,
-  ARRAY['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11:half', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14:full']
+  'Lean & Clean Single Plan', 
+  'Enjoy a 10-meal pack of our low-carb Garden Greens Salad (Half Pack) to jumpstart your diet.', 
+  'individual', 
+  400,
+  10,
+  ARRAY['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11:half'],
+  'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600'
 ),
 (
-  'Muscle Recovery Combo', 
-  'Double dose of premium protein: Protein Booster (Full Pack) and Keto Smoked Salmon (Full Pack).', 
-  320, 
-  550,
-  ARRAY['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12:full', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13:full']
+  'Detox & Greens Combo Plan', 
+  'A healthy combination of Garden Greens (Half Pack) and Feta Berry Crunch (Full Pack) to stay active.', 
+  'combo', 
+  600, 
+  10,
+  ARRAY['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11:half', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14:full'],
+  'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=600'
 ),
 (
-  'Keto Greens Combo', 
-  'Synced low-carb recipes: Keto Smoked Salmon (Half Pack) and Garden Greens (Half Pack).', 
-  270, 
-  470,
-  ARRAY['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11:half', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13:half']
+  'Muscle Recovery Combo Plan', 
+  'Premium protein-heavy combo featuring Protein Booster (Full Pack) and Keto Smoked Salmon (Full Pack).', 
+  'combo', 
+  900, 
+  10,
+  ARRAY['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12:full', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13:full'],
+  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600'
 );
 
--- 8. Row-Level Security (RLS) Configuration
+-- 7. Enable RLS (Safe check)
 ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE salads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE salad_plans ENABLE ROW LEVEL SECURITY;

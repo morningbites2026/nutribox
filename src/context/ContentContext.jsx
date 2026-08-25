@@ -66,27 +66,33 @@ const defaultSalads = [
 const defaultPlans = [
   {
     id: 'p1',
-    title: 'Detox & Greens Combo',
-    description: 'Combines our detoxifying Garden Greens (Half Pack) and Feta Berry Crunch (Full Pack).',
-    price_half: 220,
-    price_full: 380,
-    salad_items: ['s1:half', 's4:full']
+    title: 'Lean & Clean Single Plan',
+    description: 'Enjoy a 10-meal pack of our low-carb Garden Greens Salad (Half Pack) to jumpstart your diet.',
+    plan_type: 'individual', // 'individual' or 'combo'
+    price: 400,
+    meals_count: 10,
+    salad_items: ['s1:half'],
+    image_url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600'
   },
   {
     id: 'p2',
-    title: 'Muscle Recovery Combo',
-    description: 'Double dose of premium protein: Protein Booster (Full Pack) and Keto Smoked Salmon (Full Pack).',
-    price_half: 320,
-    price_full: 550,
-    salad_items: ['s2:full', 's3:full']
+    title: 'Detox & Greens Combo Plan',
+    description: 'A healthy combination of Garden Greens (Half Pack) and Feta Berry Crunch (Full Pack) to stay active.',
+    plan_type: 'combo',
+    price: 600,
+    meals_count: 10,
+    salad_items: ['s1:half', 's4:full'],
+    image_url: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=600'
   },
   {
     id: 'p3',
-    title: 'Keto Greens Combo',
-    description: 'Synced low-carb recipes: Keto Smoked Salmon (Half Pack) and Garden Greens (Half Pack).',
-    price_half: 270,
-    price_full: 470,
-    salad_items: ['s1:half', 's3:half']
+    title: 'Muscle Recovery Combo Plan',
+    description: 'Premium protein-heavy combo featuring Protein Booster (Full Pack) and Keto Smoked Salmon (Full Pack).',
+    plan_type: 'combo',
+    price: 900,
+    meals_count: 10,
+    salad_items: ['s2:full', 's3:full'],
+    image_url: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600'
   }
 ];
 
@@ -184,6 +190,7 @@ export const ContentProvider = ({ children }) => {
       localStorage.setItem('nutribox_settings', JSON.stringify(defaultSettings));
     }
 
+    // IMPORTANT: Preserve existing salads if the user has already added them
     if (savedSalads) {
       setSalads(JSON.parse(savedSalads));
     } else {
@@ -331,7 +338,7 @@ export const ContentProvider = ({ children }) => {
   };
 
   // ==========================================
-  // COMBO PLANS CRUD OPERATIONS
+  // SALAD PLANS (COMBOS & SINGLE PLANS) CRUD
   // ==========================================
 
   const addSaladPlan = async (newPlan) => {
@@ -350,14 +357,16 @@ export const ContentProvider = ({ children }) => {
         .insert([{
           title: newPlan.title,
           description: newPlan.description,
-          price_half: parseFloat(newPlan.price_half) || 0,
-          price_full: parseFloat(newPlan.price_full) || 0,
-          salad_items: newPlan.salad_items || []
+          plan_type: newPlan.plan_type,
+          price: parseFloat(newPlan.price) || 0,
+          meals_count: parseInt(newPlan.meals_count) || 10,
+          salad_items: newPlan.salad_items || [],
+          image_url: newPlan.image_url
         }])
         .select();
 
       if (error) {
-        console.error("Failed to insert combo plan in Supabase:", error);
+        console.error("Failed to insert salad plan in Supabase:", error);
         throw error;
       }
       
@@ -383,14 +392,16 @@ export const ContentProvider = ({ children }) => {
         .update({
           title: updatedPlan.title,
           description: updatedPlan.description,
-          price_half: parseFloat(updatedPlan.price_half) || 0,
-          price_full: parseFloat(updatedPlan.price_full) || 0,
-          salad_items: updatedPlan.salad_items || []
+          plan_type: updatedPlan.plan_type,
+          price: parseFloat(updatedPlan.price) || 0,
+          meals_count: parseInt(updatedPlan.meals_count) || 10,
+          salad_items: updatedPlan.salad_items || [],
+          image_url: updatedPlan.image_url
         })
         .eq('id', id);
 
       if (error) {
-        console.error(`Failed to update combo plan ${id} in Supabase:`, error);
+        console.error(`Failed to update salad plan ${id} in Supabase:`, error);
         throw error;
       }
     }
@@ -412,7 +423,7 @@ export const ContentProvider = ({ children }) => {
         .eq('id', id);
 
       if (error) {
-        console.error(`Failed to delete combo plan ${id} in Supabase:`, error);
+        console.error(`Failed to delete salad plan ${id} in Supabase:`, error);
         throw error;
       }
     }
