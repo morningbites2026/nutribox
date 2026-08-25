@@ -3,15 +3,8 @@ import { Check, Salad, Tag } from 'lucide-react';
 import { useContent } from '../context/ContentContext';
 
 const Plans = () => {
-  const { saladPlans, salads } = useContent();
+  const { saladPlans, salads, setActiveSubscribePlan } = useContent();
   const [activeMenuTab, setActiveMenuTab] = useState('individual'); // 'individual' or 'combo'
-
-  const handleSelectPlan = (title) => {
-    const contactSection = document.getElementById('contact');
-    if (contactSection) {
-      contactSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
 
   // Filter plans based on active tab
   const filteredPlans = saladPlans.filter(plan => plan.plan_type === activeMenuTab);
@@ -284,7 +277,7 @@ const Plans = () => {
                     </div>
 
                     <button 
-                      onClick={() => handleSelectPlan(plan.title)}
+                      onClick={() => setActiveSubscribePlan(plan.title)}
                       className="btn btn-primary"
                       style={{
                         padding: '10px 20px',

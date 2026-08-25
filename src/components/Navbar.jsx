@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Sun, Moon, Settings, Menu, X, Leaf } from 'lucide-react';
+import { Sun, Moon, Menu, X, Leaf } from 'lucide-react';
 import { useContent } from '../context/ContentContext';
 
 const Navbar = () => {
@@ -53,6 +53,12 @@ const Navbar = () => {
     }
   };
 
+  const getCleanWhatsappLink = () => {
+    if (!siteSettings.social_whatsapp) return '#';
+    const cleanNum = siteSettings.social_whatsapp.replace(/[^\d]/g, '');
+    return `https://wa.me/${cleanNum}`;
+  };
+
   return (
     <nav className={`glass`} style={{
       position: 'fixed',
@@ -103,15 +109,27 @@ const Navbar = () => {
         <div style={{
           display: 'none',
           alignItems: 'center',
-          gap: '32px',
+          gap: '24px',
         }} className="desktop-menu">
           <a href="#hero" onClick={(e) => handleNavClick(e, 'hero')} style={navLinkStyle}>Home</a>
           <a href="#plans" onClick={(e) => handleNavClick(e, 'plans')} style={navLinkStyle}>Our Plans</a>
           <a href="#contact" onClick={(e) => handleNavClick(e, 'contact')} style={navLinkStyle}>Contact</a>
           
-          <button onClick={toggleTheme} style={iconBtnStyle} title="Toggle Theme">
-            {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-          </button>
+          <div style={{ display: 'flex', gap: '8px', borderLeft: '1px solid var(--border-color)', paddingLeft: '20px' }}>
+            {siteSettings.social_whatsapp && (
+              <a href={getCleanWhatsappLink()} target="_blank" rel="noreferrer" style={iconBtnStyle} title="WhatsApp">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)' }}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              </a>
+            )}
+            {siteSettings.social_instagram && (
+              <a href={siteSettings.social_instagram} target="_blank" rel="noreferrer" style={iconBtnStyle} title="Instagram">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--accent)' }}><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+              </a>
+            )}
+            <button onClick={toggleTheme} style={iconBtnStyle} title="Toggle Theme">
+              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile controls toggle */}
@@ -120,8 +138,18 @@ const Navbar = () => {
           alignItems: 'center',
           gap: '12px',
         }} className="mobile-menu-toggle">
+          {siteSettings.social_whatsapp && (
+            <a href={getCleanWhatsappLink()} target="_blank" rel="noreferrer" style={iconBtnStyle} title="WhatsApp" className="mobile-only-btn">
+              <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)' }}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            </a>
+          )}
+          {siteSettings.social_instagram && (
+            <a href={siteSettings.social_instagram} target="_blank" rel="noreferrer" style={iconBtnStyle} title="Instagram" className="mobile-only-btn">
+              <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--accent)' }}><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+            </a>
+          )}
           <button onClick={toggleTheme} style={iconBtnStyle} title="Toggle Theme" className="mobile-only-btn">
-            {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
           </button>
 
           <button onClick={() => setIsOpen(!isOpen)} style={iconBtnStyle} className="mobile-toggle">
@@ -164,7 +192,7 @@ const Navbar = () => {
         .mobile-only-btn {
           display: flex;
           align-items: center;
-          justify-content: center;
+          justifyContent: center;
         }
       `}</style>
     </nav>
@@ -175,7 +203,7 @@ const navLinkStyle = {
   textDecoration: 'none',
   color: 'var(--text-muted)',
   fontSize: '15px',
-  fontWeight: 500,
+  fontWeight: 600,
   transition: 'var(--transition-smooth)',
   cursor: 'pointer'
 };
@@ -184,7 +212,7 @@ const mobileNavLinkStyle = {
   textDecoration: 'none',
   color: 'var(--text-main)',
   fontSize: '18px',
-  fontWeight: 500,
+  fontWeight: 600,
   padding: '8px 0',
   borderBottom: '1px solid var(--border-color)'
 };
@@ -199,20 +227,6 @@ const iconBtnStyle = {
   justifyContent: 'center',
   padding: '8px',
   borderRadius: '50%',
-  transition: 'var(--transition-smooth)'
-};
-
-const adminLinkStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '6px',
-  textDecoration: 'none',
-  color: 'var(--primary)',
-  fontSize: '14px',
-  fontWeight: 600,
-  backgroundColor: 'var(--primary-light)',
-  padding: '8px 16px',
-  borderRadius: 'var(--radius-full)',
   transition: 'var(--transition-smooth)'
 };
 

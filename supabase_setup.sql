@@ -49,10 +49,13 @@ INSERT INTO site_settings (key, value) VALUES
 ('hero_title', 'Fresh, Chef-Crafted Salads & Combos Delivered to Your Doorstep'),
 ('hero_subtitle', 'Premium subscription-based healthy meal plans made with 100% organic ingredients, tailored to your dietary goals.'),
 ('contact_email', 'hello@nutribox.com'),
-('contact_phone', '+91 98765 43210'),
+('contact_phone', '+91 94299 29822, +91 98765 43210'),
 ('contact_address', '123 Green Avenue, Sector 5, HSR Layout, Bangalore, Karnataka 560102'),
 ('business_hours', 'Mon - Sat: 8:00 AM - 6:00 PM'),
-('admin_passcode', 'admin123')
+('admin_passcode', 'admin123'),
+('social_whatsapp', '+91 94299 29822'),
+('social_instagram', 'https://instagram.com/nutribox'),
+('footer_text', '© 2026 Nutribox. Fresh & Healthy Salad Subscriptions.')
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
 -- 6. Insert Default Salad Plans (Relational seeds matching default salads)
@@ -92,7 +95,6 @@ ALTER TABLE salads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE salad_plans ENABLE ROW LEVEL SECURITY;
 
 -- 8. Row-Level Security (RLS) Policies (Clean Drop & Recreate)
--- Drop existing policies first to prevent "policy already exists" errors
 DROP POLICY IF EXISTS "Allow public read on site_settings" ON site_settings;
 DROP POLICY IF EXISTS "Allow public read on salads" ON salads;
 DROP POLICY IF EXISTS "Allow public read on salad_plans" ON salad_plans;

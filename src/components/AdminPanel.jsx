@@ -61,7 +61,10 @@ const AdminPanel = () => {
     contact_phone: '',
     contact_address: '',
     business_hours: '',
-    admin_passcode: ''
+    admin_passcode: '',
+    social_whatsapp: '',
+    social_instagram: '',
+    footer_text: ''
   });
 
   // Initialize settings form values
@@ -76,7 +79,10 @@ const AdminPanel = () => {
         contact_phone: siteSettings.contact_phone || '',
         contact_address: siteSettings.contact_address || '',
         business_hours: siteSettings.business_hours || '',
-        admin_passcode: siteSettings.admin_passcode || ''
+        admin_passcode: siteSettings.admin_passcode || '',
+        social_whatsapp: siteSettings.social_whatsapp || '',
+        social_instagram: siteSettings.social_instagram || '',
+        footer_text: siteSettings.footer_text || ''
       });
     }
   }, [siteSettings]);
@@ -877,7 +883,6 @@ const AdminPanel = () => {
                       <select 
                         value={planForm.plan_type}
                         onChange={(e) => {
-                          // Clean selection if toggling to prevent multi-select items bleeding
                           setPlanForm({
                             ...planForm,
                             plan_type: e.target.value,
@@ -1087,11 +1092,12 @@ const AdminPanel = () => {
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
                 <div className="admin-input-group">
-                  <label className="admin-label">Contact Phone</label>
+                  <label className="admin-label">Contact Phone (Comma-separated for multiple)</label>
                   <input 
                     type="text" 
                     value={settingsForm.contact_phone}
                     onChange={(e) => setSettingsForm({...settingsForm, contact_phone: e.target.value})}
+                    placeholder="+91 94299 29822, +91 98765 43210"
                     className="admin-input"
                   />
                 </div>
@@ -1136,6 +1142,41 @@ const AdminPanel = () => {
                     className="admin-input"
                   />
                 </div>
+              </div>
+
+              <h4 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)', marginTop: '24px', marginBottom: '12px' }}>Social Media & Footer Settings</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
+                <div className="admin-input-group">
+                  <label className="admin-label">WhatsApp Number (e.g. +91 94299 29822)</label>
+                  <input 
+                    type="text" 
+                    value={settingsForm.social_whatsapp}
+                    onChange={(e) => setSettingsForm({...settingsForm, social_whatsapp: e.target.value})}
+                    placeholder="+919429929822"
+                    className="admin-input"
+                  />
+                </div>
+                <div className="admin-input-group">
+                  <label className="admin-label">Instagram Profile URL</label>
+                  <input 
+                    type="text" 
+                    value={settingsForm.social_instagram}
+                    onChange={(e) => setSettingsForm({...settingsForm, social_instagram: e.target.value})}
+                    placeholder="https://instagram.com/your-username"
+                    className="admin-input"
+                  />
+                </div>
+              </div>
+
+              <div className="admin-input-group">
+                <label className="admin-label">Footer Copyright / Text</label>
+                <input 
+                  type="text" 
+                  value={settingsForm.footer_text}
+                  onChange={(e) => setSettingsForm({...settingsForm, footer_text: e.target.value})}
+                  placeholder="© 2026 Nutribox. Fresh & Healthy Salad Subscriptions."
+                  className="admin-input"
+                />
               </div>
 
               <div style={{ marginTop: '30px', borderTop: '1px solid var(--border-color)', paddingTop: '24px' }}>

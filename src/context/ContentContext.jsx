@@ -10,10 +10,13 @@ const defaultSettings = {
   hero_title: 'Fresh, Chef-Crafted Salads & Combos Delivered to Your Door',
   hero_subtitle: 'Premium subscription-based healthy meal plans made with 100% organic ingredients, tailored to your dietary goals.',
   contact_email: 'hello@nutribox.com',
-  contact_phone: '+91 98765 43210',
+  contact_phone: '+91 94299 29822, +91 98765 43210',
   contact_address: '123 Green Avenue, Sector 5, HSR Layout, Bangalore, Karnataka 560102',
   business_hours: 'Mon - Sat: 8:00 AM - 6:00 PM',
-  admin_passcode: 'admin123'
+  admin_passcode: 'admin123',
+  social_whatsapp: '+91 94299 29822',
+  social_instagram: 'https://instagram.com/nutribox',
+  footer_text: '© 2026 Nutribox. Fresh & Healthy Salad Subscriptions.'
 };
 
 const defaultSalads = [
@@ -104,6 +107,10 @@ export const ContentProvider = ({ children }) => {
   const [isDemoMode, setIsDemoMode] = useState(true);
   const [supabaseClient, setSupabaseClient] = useState(null);
 
+  // Global modals states
+  const [activeSubscribePlan, setActiveSubscribePlan] = useState(null);
+  const [activeDialerPhones, setActiveDialerPhones] = useState(null);
+
   // Initialize Supabase Client if env variables exist
   useEffect(() => {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -190,7 +197,6 @@ export const ContentProvider = ({ children }) => {
       localStorage.setItem('nutribox_settings', JSON.stringify(defaultSettings));
     }
 
-    // IMPORTANT: Preserve existing salads if the user has already added them
     if (savedSalads) {
       setSalads(JSON.parse(savedSalads));
     } else {
@@ -229,6 +235,18 @@ export const ContentProvider = ({ children }) => {
         console.error("Failed to batch update settings in Supabase:", error);
         throw error;
       }
+    }
+  };
+
+  // Safe phone dialer router
+  const openPhoneDialer = (phoneString) => {
+    if (!phoneString) return;
+    const phones = phoneString.split(',').map(p => p.trim()).filter(Boolean);
+    if (phones.length <= 1) {
+      const cleanPhoneNum = phones[0] ? phones[0].replace(/[^\d+]/g, '') : '';
+      window.location.href = `tel:${cleanPhoneNum}`;
+    } else {
+      setActiveDialerPhones(phones);
     }
   };
 
@@ -338,7 +356,7 @@ export const ContentProvider = ({ children }) => {
   };
 
   // ==========================================
-  // SALAD PLANS (COMBOS & SINGLE PLANS) CRUD
+  // SALAD PLANS CRUD
   // ==========================================
 
   const addSaladPlan = async (newPlan) => {
@@ -437,6 +455,11 @@ export const ContentProvider = ({ children }) => {
       loading,
       isDemoMode,
       updateMultipleSettings,
+      activeSubscribePlan,
+      setActiveSubscribePlan,
+      activeDialerPhones,
+      setActiveDialerPhones,
+      openPhoneDialer,
       addSalad,
       updateSalad,
       deleteSalad,
