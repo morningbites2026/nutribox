@@ -91,12 +91,21 @@ ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE salads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE salad_plans ENABLE ROW LEVEL SECURITY;
 
--- Read policies
+-- 8. Row-Level Security (RLS) Policies (Clean Drop & Recreate)
+-- Drop existing policies first to prevent "policy already exists" errors
+DROP POLICY IF EXISTS "Allow public read on site_settings" ON site_settings;
+DROP POLICY IF EXISTS "Allow public read on salads" ON salads;
+DROP POLICY IF EXISTS "Allow public read on salad_plans" ON salad_plans;
+
+DROP POLICY IF EXISTS "Allow public write on site_settings" ON site_settings;
+DROP POLICY IF EXISTS "Allow public write on salads" ON salads;
+DROP POLICY IF EXISTS "Allow public write on salad_plans" ON salad_plans;
+
+-- Recreate policies
 CREATE POLICY "Allow public read on site_settings" ON site_settings FOR SELECT USING (true);
 CREATE POLICY "Allow public read on salads" ON salads FOR SELECT USING (true);
 CREATE POLICY "Allow public read on salad_plans" ON salad_plans FOR SELECT USING (true);
 
--- Write policies
 CREATE POLICY "Allow public write on site_settings" ON site_settings FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow public write on salads" ON salads FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow public write on salad_plans" ON salad_plans FOR ALL USING (true) WITH CHECK (true);
