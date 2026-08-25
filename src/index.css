@@ -47,6 +47,7 @@
   --glass-bg: rgba(19, 25, 21, 0.8);
   --glass-border: rgba(255, 255, 255, 0.05);
   --primary-light: hsl(var(--primary-hue), 30%, 15%);
+  --primary-dark: hsl(var(--primary-hue), 60%, 94%);
   --shadow-md: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
 }
 
