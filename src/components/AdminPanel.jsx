@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, LayoutGrid, FileText, Database, Plus, Trash2, Edit2, 
-  Check, AlertTriangle, HelpCircle, Save, LogOut, CheckCircle, ShieldAlert, Salad, Tag
+  Check, AlertTriangle, HelpCircle, Save, LogOut, CheckCircle, ShieldAlert, Salad, Settings
 } from 'lucide-react';
 import { useContent } from '../context/ContentContext';
 
@@ -19,7 +19,7 @@ const AdminPanel = () => {
   const [authError, setAuthError] = useState('');
 
   // Active tab state
-  const [activeTab, setActiveTab] = useState('salads'); // 'salads', 'plans', 'settings', 'database'
+  const [activeTab, setActiveTab] = useState('salads'); // 'salads', 'plans', 'settings', 'footer', 'database'
 
   // Alert state
   const [alert, setAlert] = useState({ show: false, message: '', type: 'success' });
@@ -64,7 +64,8 @@ const AdminPanel = () => {
     admin_passcode: '',
     social_whatsapp: '',
     social_instagram: '',
-    footer_text: ''
+    footer_text: '',
+    delivery_info: ''
   });
 
   // Initialize settings form values
@@ -82,7 +83,8 @@ const AdminPanel = () => {
         admin_passcode: siteSettings.admin_passcode || '',
         social_whatsapp: siteSettings.social_whatsapp || '',
         social_instagram: siteSettings.social_instagram || '',
-        footer_text: siteSettings.footer_text || ''
+        footer_text: siteSettings.footer_text || '',
+        delivery_info: siteSettings.delivery_info || ''
       });
     }
   }, [siteSettings]);
@@ -127,7 +129,7 @@ const AdminPanel = () => {
     e.preventDefault();
     try {
       await updateMultipleSettings(settingsForm);
-      triggerAlert('Site settings updated successfully!');
+      triggerAlert('Settings updated successfully!');
     } catch (err) {
       triggerAlert('Failed to update settings. Please check console.', 'error');
     }
@@ -532,8 +534,20 @@ const AdminPanel = () => {
               fontWeight: activeTab === 'settings' ? 700 : 500
             }}
           >
-            <FileText size={18} />
+            <Settings size={18} />
             Site Settings
+          </button>
+          <button 
+            onClick={() => { setActiveTab('footer'); setIsPlanFormOpen(false); setIsSaladFormOpen(false); }}
+            style={{
+              ...sidebarBtnStyle,
+              backgroundColor: activeTab === 'footer' ? 'var(--primary-light)' : 'transparent',
+              color: activeTab === 'footer' ? 'var(--primary)' : 'var(--text-muted)',
+              fontWeight: activeTab === 'footer' ? 700 : 500
+            }}
+          >
+            <FileText size={18} />
+            Footer Settings
           </button>
           <button 
             onClick={() => { setActiveTab('database'); setIsPlanFormOpen(false); setIsSaladFormOpen(false); }}
@@ -1045,7 +1059,7 @@ const AdminPanel = () => {
           {activeTab === 'settings' && (
             <form onSubmit={handleSettingsSubmit}>
               <h3 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '6px' }}>Site Content Settings</h3>
-              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '24px' }}>Update structural headlines, contact values, and passwords.</p>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '24px' }}>Update structural headlines, site details, and passwords.</p>
 
               <div className="admin-input-group">
                 <label className="admin-label">Business Name</label>
@@ -1090,6 +1104,32 @@ const AdminPanel = () => {
                 />
               </div>
 
+              <div className="admin-input-group">
+                <label className="admin-label">Admin Passcode (Secure auth key)</label>
+                <input 
+                  type="text" 
+                  value={settingsForm.admin_passcode}
+                  onChange={(e) => setSettingsForm({...settingsForm, admin_passcode: e.target.value})}
+                  placeholder="admin123"
+                  className="admin-input"
+                />
+              </div>
+
+              <div style={{ marginTop: '30px', borderTop: '1px solid var(--border-color)', paddingTop: '24px' }}>
+                <button type="submit" className="btn btn-primary">
+                  <Save size={16} />
+                  Save Site Settings
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* TAB: FOOTER SETTINGS (SEPARATE FROM SITE SETTINGS) */}
+          {activeTab === 'footer' && (
+            <form onSubmit={handleSettingsSubmit}>
+              <h3 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '6px' }}>Footer & Social Settings</h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '24px' }}>Configure footer texts, hours, delivery descriptions, multiple phone listings, and social link handles.</p>
+
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
                 <div className="admin-input-group">
                   <label className="admin-label">Contact Phone (Comma-separated for multiple)</label>
@@ -1107,6 +1147,7 @@ const AdminPanel = () => {
                     type="email" 
                     value={settingsForm.contact_email}
                     onChange={(e) => setSettingsForm({...settingsForm, contact_email: e.target.value})}
+                    placeholder="hello@nutribox.com"
                     className="admin-input"
                   />
                 </div>
@@ -1118,36 +1159,36 @@ const AdminPanel = () => {
                   type="text" 
                   value={settingsForm.contact_address}
                   onChange={(e) => setSettingsForm({...settingsForm, contact_address: e.target.value})}
+                  placeholder="123 Green Avenue, HSR Layout, Bangalore"
                   className="admin-input"
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
-                <div className="admin-input-group">
-                  <label className="admin-label">Working Hours Statement</label>
-                  <input 
-                    type="text" 
-                    value={settingsForm.business_hours}
-                    onChange={(e) => setSettingsForm({...settingsForm, business_hours: e.target.value})}
-                    className="admin-input"
-                  />
-                </div>
-                <div className="admin-input-group">
-                  <label className="admin-label">Admin Passcode (Secure auth key)</label>
-                  <input 
-                    type="text" 
-                    value={settingsForm.admin_passcode}
-                    onChange={(e) => setSettingsForm({...settingsForm, admin_passcode: e.target.value})}
-                    placeholder="admin123"
-                    className="admin-input"
-                  />
-                </div>
+              <div className="admin-input-group">
+                <label className="admin-label">Working Hours Statement</label>
+                <input 
+                  type="text" 
+                  value={settingsForm.business_hours}
+                  onChange={(e) => setSettingsForm({...settingsForm, business_hours: e.target.value})}
+                  placeholder="Mon - Sat: 8:00 AM - 6:00 PM"
+                  className="admin-input"
+                />
               </div>
 
-              <h4 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)', marginTop: '24px', marginBottom: '12px' }}>Social Media & Footer Settings</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
+              <div className="admin-input-group">
+                <label className="admin-label">Delivery Description / Info Statement (Authorable)</label>
+                <textarea 
+                  value={settingsForm.delivery_info}
+                  onChange={(e) => setSettingsForm({...settingsForm, delivery_info: e.target.value})}
+                  placeholder="e.g. All orders are prepared fresh at 5:00 AM each morning and dispatched for delivery..."
+                  className="admin-textarea"
+                  style={{ minHeight: '80px' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginTop: '10px' }}>
                 <div className="admin-input-group">
-                  <label className="admin-label">WhatsApp Number (e.g. +91 94299 29822)</label>
+                  <label className="admin-label">WhatsApp Handle Number (e.g. +91 94299 29822)</label>
                   <input 
                     type="text" 
                     value={settingsForm.social_whatsapp}
@@ -1169,7 +1210,7 @@ const AdminPanel = () => {
               </div>
 
               <div className="admin-input-group">
-                <label className="admin-label">Footer Copyright / Text</label>
+                <label className="admin-label">Footer Copyright Label / Text</label>
                 <input 
                   type="text" 
                   value={settingsForm.footer_text}
@@ -1182,7 +1223,7 @@ const AdminPanel = () => {
               <div style={{ marginTop: '30px', borderTop: '1px solid var(--border-color)', paddingTop: '24px' }}>
                 <button type="submit" className="btn btn-primary">
                   <Save size={16} />
-                  Save Site Settings
+                  Save Footer Settings
                 </button>
               </div>
             </form>

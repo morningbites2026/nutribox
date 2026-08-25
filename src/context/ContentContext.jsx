@@ -16,7 +16,8 @@ const defaultSettings = {
   admin_passcode: 'admin123',
   social_whatsapp: '+91 94299 29822',
   social_instagram: 'https://instagram.com/nutribox',
-  footer_text: '© 2026 Nutribox. Fresh & Healthy Salad Subscriptions.'
+  footer_text: '© 2026 Nutribox. Fresh & Healthy Salad Subscriptions.',
+  delivery_info: 'All orders are prepared fresh at 5:00 AM each morning and dispatched for delivery in temperature-controlled boxes.'
 };
 
 const defaultSalads = [
