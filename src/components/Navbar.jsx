@@ -85,23 +85,50 @@ const Navbar = () => {
         <Link to="/" onClick={(e) => handleNavClick(e, 'hero')} style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
-          textDecoration: 'none',
-          color: 'var(--primary)',
-          fontWeight: 700,
-          fontSize: '22px',
-          letterSpacing: '-0.5px'
+          gap: '12px',
+          textDecoration: 'none'
         }}>
           {logoSrc ? (
-            <img 
-              src={logoSrc} 
-              alt={businessName} 
-              style={{ maxHeight: '55px', maxWidth: '180px', objectFit: 'contain', borderRadius: '50%' }} 
-            />
+            <>
+              <img 
+                src={logoSrc} 
+                alt={businessName} 
+                style={{ 
+                  maxHeight: '62px', 
+                  width: 'auto', 
+                  objectFit: 'contain', 
+                  borderRadius: '50%',
+                  backgroundColor: '#ffffff',
+                  boxShadow: 'var(--shadow-sm)',
+                  border: '2px solid var(--primary-medium)'
+                }} 
+              />
+              <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+                <span style={{ 
+                  fontSize: '22px', 
+                  fontWeight: 800, 
+                  color: 'var(--primary-dark)', 
+                  lineHeight: 1.1,
+                  letterSpacing: '-0.5px'
+                }}>
+                  {businessName}
+                </span>
+                <span style={{ 
+                  fontSize: '10px', 
+                  fontWeight: 700, 
+                  color: 'var(--accent)', 
+                  letterSpacing: '0.7px', 
+                  textTransform: 'uppercase',
+                  marginTop: '3px'
+                }}>
+                  Small Box. Big Impact.
+                </span>
+              </div>
+            </>
           ) : (
             <>
-              <Leaf style={{ width: '28px', height: '28px', fill: 'currentColor' }} />
-              <span>{businessName}</span>
+              <Leaf style={{ width: '28px', height: '28px', fill: 'currentColor', color: 'var(--primary)' }} />
+              <span style={{ fontSize: '22px', fontWeight: 700, color: 'var(--primary)' }}>{businessName}</span>
             </>
           )}
         </Link>
