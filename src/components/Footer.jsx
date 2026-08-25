@@ -84,14 +84,43 @@ const Footer = () => {
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              color: 'var(--accent)',
-              fontWeight: 700,
-              fontSize: '24px',
+              gap: '12px',
               marginBottom: '20px'
             }}>
-              <Leaf style={{ width: '28px', height: '28px', fill: 'currentColor' }} />
-              <span style={{ color: '#ffffff' }}>{businessName}</span>
+              <img 
+                src={siteSettings.logo_url || '/logo.jpg'} 
+                alt={businessName} 
+                style={{ 
+                  maxHeight: '56px', 
+                  width: 'auto', 
+                  objectFit: 'contain', 
+                  borderRadius: '50%',
+                  backgroundColor: '#ffffff',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                  border: '2px solid var(--accent)'
+                }} 
+              />
+              <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+                <span style={{ 
+                  fontSize: '20px', 
+                  fontWeight: 800, 
+                  color: '#ffffff', 
+                  lineHeight: 1.1,
+                  letterSpacing: '-0.5px'
+                }}>
+                  {businessName}
+                </span>
+                <span style={{ 
+                  fontSize: '10px', 
+                  fontWeight: 700, 
+                  color: 'var(--accent)', 
+                  letterSpacing: '0.7px', 
+                  textTransform: 'uppercase',
+                  marginTop: '3px'
+                }}>
+                  Small Box. Big Impact.
+                </span>
+              </div>
             </div>
             <p style={{
               color: 'var(--footer-text-muted)',
