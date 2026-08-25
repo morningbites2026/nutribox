@@ -1,6 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Clock, Leaf, Heart } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Leaf } from 'lucide-react';
 import { useContent } from '../context/ContentContext';
 
 const Footer = () => {
@@ -196,28 +195,7 @@ const Footer = () => {
 
         </div>
 
-        {/* Footer Bottom */}
-        <div style={{
-          borderTop: '1px solid rgba(255,255,255,0.1)',
-          paddingTop: '30px',
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '16px',
-          fontSize: '13px',
-          color: 'rgba(255,255,255,0.5)'
-        }}>
-          <p>{footerText}</p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <Link to="/admin" style={{ color: 'rgba(255,255,255,0.6)', textDecoration: 'none', fontWeight: 600 }}>
-              Admin Panel
-            </Link>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              Made with <Heart size={12} style={{ color: 'var(--accent)', fill: 'var(--accent)' }} /> for organic living.
-            </span>
-          </div>
-        </div>
+
       </div>
     </footer>
   );
