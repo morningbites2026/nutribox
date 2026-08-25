@@ -13,19 +13,21 @@ CREATE TABLE site_settings (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
 );
 
--- 3. Create salads table (Individual salads)
+-- 3. Create salads table (with Half and Full Pack variant support)
 CREATE TABLE salads (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
     description TEXT,
-    price NUMERIC NOT NULL DEFAULT 0,
+    variant_support TEXT DEFAULT 'both', -- 'half', 'full', 'both'
+    price_half NUMERIC DEFAULT 0,
+    price_full NUMERIC DEFAULT 0,
     image_url TEXT,
     ingredients TEXT[] DEFAULT '{}',
     tags TEXT[] DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
 );
 
--- 4. Create salad_plans table (Subscription plans composed of salads)
+-- 4. Create salad_plans table (relational link via text array salad_items 'salad_id:variant')
 CREATE TABLE salad_plans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
@@ -34,7 +36,7 @@ CREATE TABLE salad_plans (
     price_monthly NUMERIC NOT NULL,
     price_pack NUMERIC NOT NULL DEFAULT 0,
     pack_name TEXT DEFAULT '10 Pack',
-    salad_ids UUID[] DEFAULT '{}',
+    salad_items TEXT[] DEFAULT '{}', -- stores '[salad_id]:[variant]'
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
 );
 
@@ -51,43 +53,41 @@ INSERT INTO site_settings (key, value) VALUES
 ('admin_passcode', 'admin123')
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
--- 6. Insert Default Salads (Temporary variables to hold IDs)
--- We will use a script block or standard insert and select to populate relation.
--- To keep the SQL editor copy-paste simple, we insert salads first:
-INSERT INTO salads (id, title, description, price, ingredients, tags, image_url) VALUES
-('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Garden Greens Salad', 'Fresh leafy greens, cucumber, tomatoes, and organic seeds.', 150, ARRAY['Baby Spinach', 'Arugula', 'Cucumber', 'Cherry Tomatoes', 'Pumpkin Seeds', 'Lemon Vinaigrette'], ARRAY['Low Carb', 'Vegan', 'Organic'], 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600'),
-('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12', 'Protein Booster Salad', 'Grilled chicken breast with almonds, greens, and broccoli.', 220, ARRAY['Grilled Chicken Breast', 'Mixed Greens', 'Broccoli Florets', 'Almonds', 'Tahini Dressing'], ARRAY['High Protein', 'Gluten Free'], 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=600'),
-('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13', 'Keto Smoked Salmon', 'High healthy fats from smoked salmon, hard boiled egg, and walnuts.', 250, ARRAY['Smoked Salmon', 'Hard Boiled Egg', 'Spinach', 'Kale', 'Avocado', 'Walnuts', 'Olive Oil & Herbs'], ARRAY['Keto', 'High Fat', 'Gluten Free'], 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600'),
-('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14', 'Feta Berry Crunch', 'Vegetarian delight with crumbled feta, fresh berries, and walnuts.', 180, ARRAY['Feta Cheese', 'Strawberries', 'Spinach', 'Walnuts', 'Balsamic Vinaigrette'], ARRAY['Vegetarian', 'Gluten Free'], 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&q=80&w=600');
+-- 6. Insert Default Salads with Half & Full prices
+INSERT INTO salads (id, title, description, variant_support, price_half, price_full, ingredients, tags, image_url) VALUES
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Garden Greens Salad', 'Fresh leafy greens, cucumber, tomatoes, and organic seeds.', 'both', 100, 180, ARRAY['Baby Spinach', 'Arugula', 'Cucumber', 'Cherry Tomatoes', 'Pumpkin Seeds', 'Lemon Vinaigrette'], ARRAY['Low Carb', 'Vegan', 'Organic'], 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600'),
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12', 'Protein Booster Salad', 'Grilled chicken breast with almonds, greens, and broccoli.', 'both', 150, 260, ARRAY['Grilled Chicken Breast', 'Mixed Greens', 'Broccoli Florets', 'Almonds', 'Tahini Dressing'], ARRAY['High Protein', 'Gluten Free'], 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=600'),
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13', 'Keto Smoked Salmon', 'High healthy fats from smoked salmon, hard boiled egg, and walnuts.', 'both', 170, 290, ARRAY['Smoked Salmon', 'Hard Boiled Egg', 'Spinach', 'Kale', 'Avocado', 'Walnuts', 'Olive Oil & Herbs'], ARRAY['Keto', 'High Fat', 'Gluten Free'], 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600'),
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14', 'Feta Berry Crunch', 'Vegetarian delight with crumbled feta, fresh berries, and walnuts.', 'both', 120, 200, ARRAY['Feta Cheese', 'Strawberries', 'Spinach', 'Walnuts', 'Balsamic Vinaigrette'], ARRAY['Vegetarian', 'Gluten Free'], 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&q=80&w=600');
 
--- 7. Insert Default Salad Plans linked to Salads
-INSERT INTO salad_plans (title, description, price_weekly, price_monthly, price_pack, pack_name, salad_ids) VALUES
+-- 7. Insert Default Salad Plans linked to specific variants
+INSERT INTO salad_plans (title, description, price_weekly, price_monthly, price_pack, pack_name, salad_items) VALUES
 (
   'Lean & Green Plan', 
-  'Designed for weight loss and detoxification. Combines our Garden Greens and Feta Berry salads.', 
+  'Designed for weight loss and detoxification. Includes Garden Greens (Half Pack) and Feta Berry (Full Pack).', 
   699, 
   2499, 
   400,
   '10 Pack',
-  ARRAY['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'::UUID, 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14'::UUID]
+  ARRAY['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11:half', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14:full']
 ),
 (
   'Protein Powerhouse Plan', 
-  'Support muscle recovery with high protein chicken and salmon options.', 
+  'Support muscle recovery with high protein chicken (Full Pack) and salmon (Full Pack) options.', 
   899, 
   3199, 
   500,
   '10 Pack',
-  ARRAY['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12'::UUID, 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13'::UUID]
+  ARRAY['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12:full', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13:full']
 ),
 (
   'Keto Balance Plan', 
-  'Ultra-low carb plan syncing our healthy Keto Smoked Salmon and Garden Greens salads.', 
+  'Ultra-low carb plan syncing our healthy Keto Smoked Salmon (Half Pack) and Garden Greens (Half Pack) salads.', 
   849, 
   2999, 
   450,
   '10 Pack',
-  ARRAY['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'::UUID, 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13'::UUID]
+  ARRAY['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11:half', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13:half']
 );
 
 -- 8. Row-Level Security (RLS) Configuration

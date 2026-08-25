@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Check, MessageSquare, Salad } from 'lucide-react';
+import { Check, Salad } from 'lucide-react';
 import { useContent } from '../context/ContentContext';
 
 const Plans = () => {
-  const { saladPlans, salads, siteSettings } = useContent();
+  const { saladPlans, salads } = useContent();
   const [billingPeriod, setBillingPeriod] = useState('weekly'); // 'weekly', 'monthly', or 'pack'
 
   const handleSelectPlan = (planTitle) => {
@@ -124,16 +124,20 @@ const Plans = () => {
               price = plan.price_pack;
             }
 
-            // Resolve selected salads details
-            const selectedSalads = salads.filter(s => plan.salad_ids?.includes(s.id));
+            // Resolve salad items with variants
+            const resolvedItems = plan.salad_items ? plan.salad_items.map(item => {
+              const [saladId, variant] = item.split(':');
+              const salad = salads.find(s => s.id === saladId);
+              return { salad, variant };
+            }).filter(item => item.salad) : [];
             
             // Compile unified ingredients and tags
             const compiledIngredients = Array.from(
-              new Set(selectedSalads.flatMap(s => s.ingredients || []))
+              new Set(resolvedItems.flatMap(item => item.salad.ingredients || []))
             );
             
             const compiledTags = Array.from(
-              new Set(selectedSalads.flatMap(s => s.tags || []))
+              new Set(resolvedItems.flatMap(item => item.salad.tags || []))
             );
             
             return (
@@ -228,17 +232,17 @@ const Plans = () => {
                     {plan.description}
                   </p>
 
-                  {/* Included Salads */}
-                  {selectedSalads.length > 0 && (
+                  {/* Included Salads & Variants */}
+                  {resolvedItems.length > 0 && (
                     <div style={{ marginBottom: '16px', backgroundColor: 'var(--bg-color)', padding: '12px 16px', borderRadius: 'var(--radius-sm)', borderLeft: '3px solid var(--primary)' }}>
                       <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Salad size={14} style={{ color: 'var(--primary)' }} />
                         Included Salad Recipes:
                       </p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 12px' }}>
-                        {selectedSalads.map(salad => (
-                          <span key={salad.id} style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)' }}>
-                            • {salad.title}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        {resolvedItems.map((item, idx) => (
+                          <span key={idx} style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)' }}>
+                            • {item.salad.title} <span style={{ color: 'var(--primary)', fontSize: '11px', fontWeight: 700 }}>({item.variant === 'half' ? 'Half Pack' : 'Full Pack'})</span>
                           </span>
                         ))}
                       </div>

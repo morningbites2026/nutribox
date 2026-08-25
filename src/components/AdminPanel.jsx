@@ -30,7 +30,9 @@ const AdminPanel = () => {
   const [saladForm, setSaladForm] = useState({
     title: '',
     description: '',
-    price: '',
+    variant_support: 'both', // 'half', 'full', 'both'
+    price_half: '',
+    price_full: '',
     image_url: '',
     ingredients_raw: '',
     tags_raw: ''
@@ -47,7 +49,7 @@ const AdminPanel = () => {
     price_pack: '',
     pack_name: '10 Pack',
     image_url: '',
-    salad_ids: []
+    salad_items: [] // array of 'salad_id:variant'
   });
 
   // Settings form state
@@ -134,7 +136,9 @@ const AdminPanel = () => {
     setSaladForm({
       title: salad.title || '',
       description: salad.description || '',
-      price: salad.price || '',
+      variant_support: salad.variant_support || 'both',
+      price_half: salad.price_half || '',
+      price_full: salad.price_full || '',
       image_url: salad.image_url || '',
       ingredients_raw: salad.ingredients ? salad.ingredients.join(', ') : '',
       tags_raw: salad.tags ? salad.tags.join(', ') : ''
@@ -147,7 +151,9 @@ const AdminPanel = () => {
     setSaladForm({
       title: '',
       description: '',
-      price: '',
+      variant_support: 'both',
+      price_half: '',
+      price_full: '',
       image_url: '',
       ingredients_raw: '',
       tags_raw: ''
@@ -157,15 +163,17 @@ const AdminPanel = () => {
 
   const handleSaladSubmit = async (e) => {
     e.preventDefault();
-    if (!saladForm.title || !saladForm.price) {
-      triggerAlert('Salad Name and Price are required!', 'error');
+    if (!saladForm.title) {
+      triggerAlert('Salad Name is required!', 'error');
       return;
     }
 
     const processedSalad = {
       title: saladForm.title,
       description: saladForm.description,
-      price: parseFloat(saladForm.price),
+      variant_support: saladForm.variant_support,
+      price_half: (saladForm.variant_support === 'half' || saladForm.variant_support === 'both') ? parseFloat(saladForm.price_half) || 0 : 0,
+      price_full: (saladForm.variant_support === 'full' || saladForm.variant_support === 'both') ? parseFloat(saladForm.price_full) || 0 : 0,
       image_url: saladForm.image_url || 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600',
       ingredients: saladForm.ingredients_raw.split(',').map(i => i.trim()).filter(Boolean),
       tags: saladForm.tags_raw.split(',').map(t => t.trim()).filter(Boolean)
@@ -209,7 +217,7 @@ const AdminPanel = () => {
       price_pack: plan.price_pack || '',
       pack_name: plan.pack_name || '10 Pack',
       image_url: plan.image_url || '',
-      salad_ids: plan.salad_ids || []
+      salad_items: plan.salad_items || []
     });
     setIsPlanFormOpen(true);
   };
@@ -224,7 +232,7 @@ const AdminPanel = () => {
       price_pack: '',
       pack_name: '10 Pack',
       image_url: '',
-      salad_ids: []
+      salad_items: []
     });
     setIsPlanFormOpen(true);
   };
@@ -243,8 +251,7 @@ const AdminPanel = () => {
       price_monthly: parseFloat(planForm.price_monthly),
       price_pack: parseFloat(planForm.price_pack) || 0,
       pack_name: planForm.pack_name || '10 Pack',
-      image_url: planForm.image_url || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=600',
-      salad_ids: planForm.salad_ids || []
+      salad_items: planForm.salad_items || []
     };
 
     try {
@@ -539,7 +546,7 @@ const AdminPanel = () => {
                         <tr>
                           <th>Photo</th>
                           <th>Salad Title</th>
-                          <th>Base Price</th>
+                          <th>Variant Prices</th>
                           <th>Ingredients</th>
                           <th>Tags</th>
                           <th style={{ textAlign: 'right' }}>Actions</th>
@@ -559,7 +566,12 @@ const AdminPanel = () => {
                               <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{salad.title}</div>
                               <div style={{ fontSize: '11px', color: 'var(--text-muted)', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '200px' }}>{salad.description}</div>
                             </td>
-                            <td style={{ fontWeight: 600 }}>₹{salad.price}</td>
+                            <td>
+                              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-main)' }}>
+                                {(salad.variant_support === 'half' || salad.variant_support === 'both') && <div>Half Pack: ₹{salad.price_half}</div>}
+                                {(salad.variant_support === 'full' || salad.variant_support === 'both') && <div>Full Pack: ₹{salad.price_full}</div>}
+                              </div>
+                            </td>
                             <td>
                               <div style={{ fontSize: '12px', color: 'var(--text-main)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {salad.ingredients ? salad.ingredients.join(', ') : '-'}
@@ -626,29 +638,58 @@ const AdminPanel = () => {
                       />
                     </div>
                     <div className="admin-input-group">
-                      <label className="admin-label">Price (₹) *</label>
-                      <input 
-                        type="number" 
-                        value={saladForm.price}
-                        onChange={(e) => setSaladForm({...saladForm, price: e.target.value})}
-                        placeholder="180"
+                      <label className="admin-label">Variant Availability *</label>
+                      <select 
+                        value={saladForm.variant_support}
+                        onChange={(e) => setSaladForm({...saladForm, variant_support: e.target.value})}
                         className="admin-input"
-                        required
-                      />
+                        style={{ height: '45px' }}
+                      >
+                        <option value="both">Both (Half & Full Pack)</option>
+                        <option value="half">Half Pack Only</option>
+                        <option value="full">Full Pack Only</option>
+                      </select>
                     </div>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
-                    <div className="admin-input-group">
-                      <label className="admin-label">Image Photo URL</label>
-                      <input 
-                        type="text" 
-                        value={saladForm.image_url}
-                        onChange={(e) => setSaladForm({...saladForm, image_url: e.target.value})}
-                        placeholder="https://images.unsplash.com/..."
-                        className="admin-input"
-                      />
-                    </div>
+                    {(saladForm.variant_support === 'half' || saladForm.variant_support === 'both') && (
+                      <div className="admin-input-group">
+                        <label className="admin-label">Half Pack Price (₹) *</label>
+                        <input 
+                          type="number" 
+                          value={saladForm.price_half}
+                          onChange={(e) => setSaladForm({...saladForm, price_half: e.target.value})}
+                          placeholder="100"
+                          className="admin-input"
+                          required
+                        />
+                      </div>
+                    )}
+                    {(saladForm.variant_support === 'full' || saladForm.variant_support === 'both') && (
+                      <div className="admin-input-group">
+                        <label className="admin-label">Full Pack Price (₹) *</label>
+                        <input 
+                          type="number" 
+                          value={saladForm.price_full}
+                          onChange={(e) => setSaladForm({...saladForm, price_full: e.target.value})}
+                          placeholder="180"
+                          className="admin-input"
+                          required
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="admin-input-group">
+                    <label className="admin-label">Image Photo URL</label>
+                    <input 
+                      type="text" 
+                      value={saladForm.image_url}
+                      onChange={(e) => setSaladForm({...saladForm, image_url: e.target.value})}
+                      placeholder="https://images.unsplash.com/..."
+                      className="admin-input"
+                    />
                   </div>
 
                   <div className="admin-input-group">
@@ -729,7 +770,7 @@ const AdminPanel = () => {
                           <th>Weekly Price</th>
                           <th>Monthly Price</th>
                           <th>Fix Pack Price</th>
-                          <th>Salads Count</th>
+                          <th>Salads Associated</th>
                           <th style={{ textAlign: 'right' }}>Actions</th>
                         </tr>
                       </thead>
@@ -752,7 +793,7 @@ const AdminPanel = () => {
                             <td>₹{plan.price_pack || 0} ({plan.pack_name || '10 Pack'})</td>
                             <td>
                               <span className="badge" style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)' }}>
-                                {plan.salad_ids ? plan.salad_ids.length : 0} Salads
+                                {plan.salad_items ? plan.salad_items.length : 0} Items
                               </span>
                             </td>
                             <td style={{ textAlign: 'right' }}>
@@ -827,55 +868,85 @@ const AdminPanel = () => {
                     />
                   </div>
 
-                  {/* Multi-Select checklist of salads */}
+                  {/* Multi-Select checklist of salads with Half / Full variant checkboxes */}
                   <div className="admin-input-group" style={{ gridColumn: 'span 2' }}>
                     <label className="admin-label" style={{ fontWeight: 600, display: 'block', marginBottom: '8px' }}>
-                      Select salads to include in this plan *
+                      Select salads and variants to include in this plan *
                     </label>
                     <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+                      display: 'flex',
+                      flexDirection: 'column',
                       gap: '12px',
                       border: '1px solid var(--border-color)',
                       padding: '16px',
                       borderRadius: 'var(--radius-sm)',
                       backgroundColor: 'var(--bg-color)',
-                      maxHeight: '200px',
+                      maxHeight: '280px',
                       overflowY: 'auto'
                     }}>
                       {salads.map(salad => {
-                        const isChecked = planForm.salad_ids?.includes(salad.id);
+                        const supportsHalf = salad.variant_support === 'half' || salad.variant_support === 'both';
+                        const supportsFull = salad.variant_support === 'full' || salad.variant_support === 'both';
+
+                        const isHalfChecked = planForm.salad_items?.includes(`${salad.id}:half`);
+                        const isFullChecked = planForm.salad_items?.includes(`${salad.id}:full`);
+
                         return (
-                          <label key={salad.id} style={{
+                          <div key={salad.id} style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '8px',
-                            fontSize: '13px',
-                            fontWeight: 500,
-                            cursor: 'pointer',
-                            padding: '4px',
+                            justifyContent: 'space-between',
+                            padding: '8px 12px',
                             borderRadius: '4px',
-                            backgroundColor: isChecked ? 'var(--primary-light)' : 'transparent',
+                            borderBottom: '1px solid var(--border-color)',
+                            backgroundColor: (isHalfChecked || isFullChecked) ? 'var(--primary-light)' : 'transparent',
                             transition: 'var(--transition-smooth)'
-                          }}>
-                            <input 
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={() => {
-                                const currentIds = planForm.salad_ids || [];
-                                const updatedIds = isChecked 
-                                  ? currentIds.filter(id => id !== salad.id)
-                                  : [...currentIds, salad.id];
-                                setPlanForm({ ...planForm, salad_ids: updatedIds });
-                              }}
-                              style={{ accentColor: 'var(--primary)' }}
-                            />
-                            <span>{salad.title}</span>
-                          </label>
+                          }} className="salad-select-row">
+                            <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>{salad.title}</span>
+                            
+                            <div style={{ display: 'flex', gap: '16px' }}>
+                              {supportsHalf && (
+                                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}>
+                                  <input 
+                                    type="checkbox"
+                                    checked={isHalfChecked}
+                                    onChange={() => {
+                                      const currentItems = planForm.salad_items || [];
+                                      const itemKey = `${salad.id}:half`;
+                                      const updated = isHalfChecked 
+                                        ? currentItems.filter(item => item !== itemKey)
+                                        : [...currentItems, itemKey];
+                                      setPlanForm({ ...planForm, salad_items: updated });
+                                    }}
+                                    style={{ accentColor: 'var(--primary)' }}
+                                  />
+                                  <span>Half Pack (₹{salad.price_half})</span>
+                                </label>
+                              )}
+                              {supportsFull && (
+                                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}>
+                                  <input 
+                                    type="checkbox"
+                                    checked={isFullChecked}
+                                    onChange={() => {
+                                      const currentItems = planForm.salad_items || [];
+                                      const itemKey = `${salad.id}:full`;
+                                      const updated = isFullChecked 
+                                        ? currentItems.filter(item => item !== itemKey)
+                                        : [...currentItems, itemKey];
+                                      setPlanForm({ ...planForm, salad_items: updated });
+                                    }}
+                                    style={{ accentColor: 'var(--primary)' }}
+                                  />
+                                  <span>Full Pack (₹{salad.price_full})</span>
+                                </label>
+                              )}
+                            </div>
+                          </div>
                         );
                       })}
                       {salads.length === 0 && (
-                        <span style={{ color: 'var(--text-muted)', fontSize: '13px', gridColumn: 'span 2', textAlign: 'center' }}>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center' }}>
                           No salads available. Create salads first in the "Salads Recipes" tab.
                         </span>
                       )}
@@ -1166,6 +1237,11 @@ const AdminPanel = () => {
           }
           .admin-sidebar button {
             white-space: nowrap !important;
+          }
+          .salad-select-row {
+            flex-direction: column !important;
+            align-items: start !important;
+            gap: 8px !important;
           }
           .price-inputs {
             grid-template-columns: 1fr !important;

@@ -21,7 +21,9 @@ const defaultSalads = [
     id: 's1',
     title: 'Garden Greens Salad',
     description: 'Fresh leafy greens, cucumber, tomatoes, and organic seeds.',
-    price: 150,
+    variant_support: 'both', // 'half', 'full', 'both'
+    price_half: 100,
+    price_full: 180,
     image_url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600',
     ingredients: ['Baby Spinach', 'Arugula', 'Cucumber', 'Cherry Tomatoes', 'Pumpkin Seeds', 'Lemon Vinaigrette'],
     tags: ['Low Carb', 'Vegan', 'Organic']
@@ -30,7 +32,9 @@ const defaultSalads = [
     id: 's2',
     title: 'Protein Booster Salad',
     description: 'Grilled chicken breast with almonds, greens, and broccoli.',
-    price: 220,
+    variant_support: 'both',
+    price_half: 150,
+    price_full: 260,
     image_url: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=600',
     ingredients: ['Grilled Chicken Breast', 'Mixed Greens', 'Broccoli Florets', 'Almonds', 'Tahini Dressing'],
     tags: ['High Protein', 'Gluten Free']
@@ -39,7 +43,9 @@ const defaultSalads = [
     id: 's3',
     title: 'Keto Smoked Salmon',
     description: 'High healthy fats from smoked salmon, hard boiled egg, and walnuts.',
-    price: 250,
+    variant_support: 'both',
+    price_half: 170,
+    price_full: 290,
     image_url: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600',
     ingredients: ['Smoked Salmon', 'Hard Boiled Egg', 'Spinach', 'Kale', 'Avocado', 'Walnuts', 'Olive Oil & Herbs'],
     tags: ['Keto', 'High Fat', 'Gluten Free']
@@ -48,7 +54,9 @@ const defaultSalads = [
     id: 's4',
     title: 'Feta Berry Crunch',
     description: 'Vegetarian delight with crumbled feta, fresh berries, and walnuts.',
-    price: 180,
+    variant_support: 'both',
+    price_half: 120,
+    price_full: 200,
     image_url: 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&q=80&w=600',
     ingredients: ['Feta Cheese', 'Strawberries', 'Spinach', 'Walnuts', 'Balsamic Vinaigrette'],
     tags: ['Vegetarian', 'Gluten Free']
@@ -59,32 +67,32 @@ const defaultPlans = [
   {
     id: 'p1',
     title: 'Lean & Green Plan',
-    description: 'Designed for weight loss and detoxification. Combines our Garden Greens and Feta Berry salads.',
+    description: 'Designed for weight loss and detoxification. Includes Garden Greens (Half Pack) and Feta Berry (Full Pack).',
     price_weekly: 699,
     price_monthly: 2499,
     price_pack: 400,
     pack_name: '10 Pack',
-    salad_ids: ['s1', 's4']
+    salad_items: ['s1:half', 's4:full']
   },
   {
     id: 'p2',
     title: 'Protein Powerhouse Plan',
-    description: 'Support muscle recovery with high protein chicken and salmon options.',
+    description: 'Support muscle recovery with high protein chicken (Full Pack) and salmon (Full Pack) options.',
     price_weekly: 899,
     price_monthly: 3199,
     price_pack: 500,
     pack_name: '10 Pack',
-    salad_ids: ['s2', 's3']
+    salad_items: ['s2:full', 's3:full']
   },
   {
     id: 'p3',
     title: 'Keto Balance Plan',
-    description: 'Ultra-low carb plan syncing our healthy Keto Smoked Salmon and Garden Greens salads.',
+    description: 'Ultra-low carb plan syncing our healthy Keto Smoked Salmon (Half Pack) and Garden Greens (Half Pack) salads.',
     price_weekly: 849,
     price_monthly: 2999,
     price_pack: 450,
     pack_name: '10 Pack',
-    salad_ids: ['s1', 's3']
+    salad_items: ['s1:half', 's3:half']
   }
 ];
 
@@ -195,29 +203,7 @@ export const ContentProvider = ({ children }) => {
     }
   };
 
-  // Update a single setting
-  const updateSiteSetting = async (key, value) => {
-    setSiteSettings(prev => {
-      const updated = { ...prev, [key]: value };
-      if (isDemoMode) {
-        localStorage.setItem('nutribox_settings', JSON.stringify(updated));
-      }
-      return updated;
-    });
-
-    if (supabaseClient && !isDemoMode) {
-      const { error } = await supabaseClient
-        .from('site_settings')
-        .upsert({ key, value, updated_at: new Date().toISOString() });
-      
-      if (error) {
-        console.error(`Failed to update setting ${key} in Supabase:`, error);
-        throw error;
-      }
-    }
-  };
-
-  // Update multiple settings at once
+  // Update site settings
   const updateMultipleSettings = async (settingsObj) => {
     setSiteSettings(prev => {
       const updated = { ...prev, ...settingsObj };
@@ -265,7 +251,9 @@ export const ContentProvider = ({ children }) => {
         .insert([{
           title: newSalad.title,
           description: newSalad.description,
-          price: parseFloat(newSalad.price) || 0,
+          variant_support: newSalad.variant_support,
+          price_half: parseFloat(newSalad.price_half) || 0,
+          price_full: parseFloat(newSalad.price_full) || 0,
           ingredients: newSalad.ingredients,
           tags: newSalad.tags,
           image_url: newSalad.image_url
@@ -299,7 +287,9 @@ export const ContentProvider = ({ children }) => {
         .update({
           title: updatedSalad.title,
           description: updatedSalad.description,
-          price: parseFloat(updatedSalad.price) || 0,
+          variant_support: updatedSalad.variant_support,
+          price_half: parseFloat(updatedSalad.price_half) || 0,
+          price_full: parseFloat(updatedSalad.price_full) || 0,
           ingredients: updatedSalad.ingredients,
           tags: updatedSalad.tags,
           image_url: updatedSalad.image_url
@@ -322,11 +312,11 @@ export const ContentProvider = ({ children }) => {
       return updated;
     });
 
-    // Also remove from any plans containing this salad
+    // Also remove from any plans containing this salad (checks matching formats: "saladId:half" or "saladId:full")
     setSaladPlans(prevPlans => {
       const updatedPlans = prevPlans.map(plan => ({
         ...plan,
-        salad_ids: plan.salad_ids ? plan.salad_ids.filter(sid => sid !== id) : []
+        salad_items: plan.salad_items ? plan.salad_items.filter(item => !item.startsWith(`${id}:`)) : []
       }));
       if (isDemoMode) {
         localStorage.setItem('nutribox_plans', JSON.stringify(updatedPlans));
@@ -371,7 +361,7 @@ export const ContentProvider = ({ children }) => {
           price_monthly: parseFloat(newPlan.price_monthly),
           price_pack: parseFloat(newPlan.price_pack) || 0,
           pack_name: newPlan.pack_name || '10 Pack',
-          salad_ids: newPlan.salad_ids || []
+          salad_items: newPlan.salad_items || []
         }])
         .select();
 
@@ -406,7 +396,7 @@ export const ContentProvider = ({ children }) => {
           price_monthly: parseFloat(updatedPlan.price_monthly),
           price_pack: parseFloat(updatedPlan.price_pack) || 0,
           pack_name: updatedPlan.pack_name || '10 Pack',
-          salad_ids: updatedPlan.salad_ids || []
+          salad_items: updatedPlan.salad_items || []
         })
         .eq('id', id);
 
@@ -446,7 +436,6 @@ export const ContentProvider = ({ children }) => {
       saladPlans,
       loading,
       isDemoMode,
-      updateSiteSetting,
       updateMultipleSettings,
       addSalad,
       updateSalad,
