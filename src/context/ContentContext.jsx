@@ -6,7 +6,7 @@ const ContentContext = createContext();
 // Mock Initial Data for LocalStorage fallback
 const defaultSettings = {
   business_name: 'Nutribox',
-  logo_url: '',
+  logo_url: '/logo.jpg',
   hero_title: 'Fresh, Chef-Crafted Salads & Combos Delivered to Your Door',
   hero_subtitle: 'Premium subscription-based healthy meal plans made with 100% organic ingredients, tailored to your dietary goals.',
   contact_email: 'hello@nutribox.com',

@@ -12,6 +12,7 @@ const Navbar = () => {
   const location = useLocation();
 
   const businessName = siteSettings.business_name || 'Nutribox';
+  const logoSrc = siteSettings.logo_url || '/logo.jpg';
 
   // Manage Dark/Light theme
   useEffect(() => {
@@ -91,11 +92,11 @@ const Navbar = () => {
           fontSize: '22px',
           letterSpacing: '-0.5px'
         }}>
-          {siteSettings.logo_url ? (
+          {logoSrc ? (
             <img 
-              src={siteSettings.logo_url} 
+              src={logoSrc} 
               alt={businessName} 
-              style={{ maxHeight: '45px', maxWidth: '180px', objectFit: 'contain' }} 
+              style={{ maxHeight: '55px', maxWidth: '180px', objectFit: 'contain', borderRadius: '50%' }} 
             />
           ) : (
             <>
