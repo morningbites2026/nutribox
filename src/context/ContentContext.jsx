@@ -16,47 +16,81 @@ const defaultSettings = {
   admin_passcode: 'admin123'
 };
 
+const defaultSalads = [
+  {
+    id: 's1',
+    title: 'Garden Greens Salad',
+    description: 'Fresh leafy greens, cucumber, tomatoes, and organic seeds.',
+    price: 150,
+    image_url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600',
+    ingredients: ['Baby Spinach', 'Arugula', 'Cucumber', 'Cherry Tomatoes', 'Pumpkin Seeds', 'Lemon Vinaigrette'],
+    tags: ['Low Carb', 'Vegan', 'Organic']
+  },
+  {
+    id: 's2',
+    title: 'Protein Booster Salad',
+    description: 'Grilled chicken breast with almonds, greens, and broccoli.',
+    price: 220,
+    image_url: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=600',
+    ingredients: ['Grilled Chicken Breast', 'Mixed Greens', 'Broccoli Florets', 'Almonds', 'Tahini Dressing'],
+    tags: ['High Protein', 'Gluten Free']
+  },
+  {
+    id: 's3',
+    title: 'Keto Smoked Salmon',
+    description: 'High healthy fats from smoked salmon, hard boiled egg, and walnuts.',
+    price: 250,
+    image_url: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600',
+    ingredients: ['Smoked Salmon', 'Hard Boiled Egg', 'Spinach', 'Kale', 'Avocado', 'Walnuts', 'Olive Oil & Herbs'],
+    tags: ['Keto', 'High Fat', 'Gluten Free']
+  },
+  {
+    id: 's4',
+    title: 'Feta Berry Crunch',
+    description: 'Vegetarian delight with crumbled feta, fresh berries, and walnuts.',
+    price: 180,
+    image_url: 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&q=80&w=600',
+    ingredients: ['Feta Cheese', 'Strawberries', 'Spinach', 'Walnuts', 'Balsamic Vinaigrette'],
+    tags: ['Vegetarian', 'Gluten Free']
+  }
+];
+
 const defaultPlans = [
   {
-    id: '1',
-    title: 'Lean & Green',
-    description: 'Designed for weight loss and detoxification. High in fiber, low in carbs, and packed with fresh leafy greens.',
+    id: 'p1',
+    title: 'Lean & Green Plan',
+    description: 'Designed for weight loss and detoxification. Combines our Garden Greens and Feta Berry salads.',
     price_weekly: 699,
     price_monthly: 2499,
     price_pack: 400,
     pack_name: '10 Pack',
-    ingredients: ['Baby Spinach', 'Arugula', 'Cucumber', 'Cherry Tomatoes', 'Avocado', 'Pumpkin Seeds', 'Lemon Vinaigrette'],
-    tags: ['Low Carb', 'Weight Loss', 'Vegan'],
-    image_url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600'
+    salad_ids: ['s1', 's4']
   },
   {
-    id: '2',
-    title: 'Protein Powerhouse',
-    description: 'Rich in clean proteins to support muscle growth and recovery. Balanced with wholesome grains and nuts.',
+    id: 'p2',
+    title: 'Protein Powerhouse Plan',
+    description: 'Support muscle recovery with high protein chicken and salmon options.',
     price_weekly: 899,
     price_monthly: 3199,
     price_pack: 500,
     pack_name: '10 Pack',
-    ingredients: ['Grilled Chicken Breast', 'Quinoa', 'Mixed Greens', 'Broccoli Florets', 'Feta Cheese', 'Almonds', 'Tahini Dressing'],
-    tags: ['High Protein', 'Gluten Free', 'Active Lifestyle'],
-    image_url: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=600'
+    salad_ids: ['s2', 's3']
   },
   {
-    id: '3',
-    title: 'Keto Balance',
-    description: 'High healthy fats, moderate protein, and ultra-low carbs. Kept delicious with premium cheeses and dressings.',
+    id: 'p3',
+    title: 'Keto Balance Plan',
+    description: 'Ultra-low carb plan syncing our healthy Keto Smoked Salmon and Garden Greens salads.',
     price_weekly: 849,
     price_monthly: 2999,
     price_pack: 450,
     pack_name: '10 Pack',
-    ingredients: ['Smoked Salmon', 'Hard Boiled Egg', 'Spinach', 'Kale', 'Avocado', 'Walnuts', 'Olive Oil & Herbs'],
-    tags: ['Keto', 'High Fat', 'Gluten Free'],
-    image_url: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600'
+    salad_ids: ['s1', 's3']
   }
 ];
 
 export const ContentProvider = ({ children }) => {
   const [siteSettings, setSiteSettings] = useState(defaultSettings);
+  const [salads, setSalads] = useState(defaultSalads);
   const [saladPlans, setSaladPlans] = useState(defaultPlans);
   const [loading, setLoading] = useState(true);
   const [isDemoMode, setIsDemoMode] = useState(true);
@@ -81,7 +115,7 @@ export const ContentProvider = ({ children }) => {
     }
   }, []);
 
-  // Fetch all settings and plans
+  // Fetch all settings, salads, and plans
   useEffect(() => {
     const loadContent = async () => {
       setLoading(true);
@@ -102,6 +136,17 @@ export const ContentProvider = ({ children }) => {
             setSiteSettings(prev => ({ ...prev, ...settingsObj }));
           }
 
+          // Load salads
+          const { data: saladsData, error: saladsError } = await supabaseClient
+            .from('salads')
+            .select('*')
+            .order('created_at', { ascending: true });
+          
+          if (saladsError) throw saladsError;
+          if (saladsData) {
+            setSalads(saladsData);
+          }
+
           // Load plans
           const { data: plansData, error: plansError } = await supabaseClient
             .from('salad_plans')
@@ -114,7 +159,6 @@ export const ContentProvider = ({ children }) => {
           }
         } catch (error) {
           console.error("Error loading data from Supabase. Falling back to local state:", error);
-          // If Supabase fetch fails, fallback to local storage
           loadFromLocalStorage();
         }
       } else {
@@ -129,12 +173,19 @@ export const ContentProvider = ({ children }) => {
 
   const loadFromLocalStorage = () => {
     const savedSettings = localStorage.getItem('nutribox_settings');
+    const savedSalads = localStorage.getItem('nutribox_salads');
     const savedPlans = localStorage.getItem('nutribox_plans');
 
     if (savedSettings) {
       setSiteSettings(JSON.parse(savedSettings));
     } else {
       localStorage.setItem('nutribox_settings', JSON.stringify(defaultSettings));
+    }
+
+    if (savedSalads) {
+      setSalads(JSON.parse(savedSalads));
+    } else {
+      localStorage.setItem('nutribox_salads', JSON.stringify(defaultSalads));
     }
 
     if (savedPlans) {
@@ -194,7 +245,112 @@ export const ContentProvider = ({ children }) => {
     }
   };
 
-  // Add a salad plan
+  // ==========================================
+  // SALADS CRUD OPERATIONS
+  // ==========================================
+
+  const addSalad = async (newSalad) => {
+    if (isDemoMode) {
+      const id = Date.now().toString();
+      const saladWithId = { ...newSalad, id };
+      setSalads(prev => {
+        const updated = [...prev, saladWithId];
+        localStorage.setItem('nutribox_salads', JSON.stringify(updated));
+        return updated;
+      });
+      return saladWithId;
+    } else {
+      const { data, error } = await supabaseClient
+        .from('salads')
+        .insert([{
+          title: newSalad.title,
+          description: newSalad.description,
+          price: parseFloat(newSalad.price) || 0,
+          ingredients: newSalad.ingredients,
+          tags: newSalad.tags,
+          image_url: newSalad.image_url
+        }])
+        .select();
+
+      if (error) {
+        console.error("Failed to insert salad in Supabase:", error);
+        throw error;
+      }
+      
+      if (data && data[0]) {
+        setSalads(prev => [...prev, data[0]]);
+        return data[0];
+      }
+    }
+  };
+
+  const updateSalad = async (id, updatedSalad) => {
+    setSalads(prev => {
+      const updated = prev.map(s => s.id === id ? { ...s, ...updatedSalad } : s);
+      if (isDemoMode) {
+        localStorage.setItem('nutribox_salads', JSON.stringify(updated));
+      }
+      return updated;
+    });
+
+    if (supabaseClient && !isDemoMode) {
+      const { error } = await supabaseClient
+        .from('salads')
+        .update({
+          title: updatedSalad.title,
+          description: updatedSalad.description,
+          price: parseFloat(updatedSalad.price) || 0,
+          ingredients: updatedSalad.ingredients,
+          tags: updatedSalad.tags,
+          image_url: updatedSalad.image_url
+        })
+        .eq('id', id);
+
+      if (error) {
+        console.error(`Failed to update salad ${id} in Supabase:`, error);
+        throw error;
+      }
+    }
+  };
+
+  const deleteSalad = async (id) => {
+    setSalads(prev => {
+      const updated = prev.filter(s => s.id !== id);
+      if (isDemoMode) {
+        localStorage.setItem('nutribox_salads', JSON.stringify(updated));
+      }
+      return updated;
+    });
+
+    // Also remove from any plans containing this salad
+    setSaladPlans(prevPlans => {
+      const updatedPlans = prevPlans.map(plan => ({
+        ...plan,
+        salad_ids: plan.salad_ids ? plan.salad_ids.filter(sid => sid !== id) : []
+      }));
+      if (isDemoMode) {
+        localStorage.setItem('nutribox_plans', JSON.stringify(updatedPlans));
+      }
+      return updatedPlans;
+    });
+
+    if (supabaseClient && !isDemoMode) {
+      const { error } = await supabaseClient
+        .from('salads')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error(`Failed to delete salad ${id} in Supabase:`, error);
+        throw error;
+      }
+    }
+  };
+
+  // ==========================================
+  // SALAD PLANS CRUD OPERATIONS
+  // ==========================================
+
   const addSaladPlan = async (newPlan) => {
     if (isDemoMode) {
       const id = Date.now().toString();
@@ -215,9 +371,7 @@ export const ContentProvider = ({ children }) => {
           price_monthly: parseFloat(newPlan.price_monthly),
           price_pack: parseFloat(newPlan.price_pack) || 0,
           pack_name: newPlan.pack_name || '10 Pack',
-          ingredients: newPlan.ingredients,
-          tags: newPlan.tags,
-          image_url: newPlan.image_url
+          salad_ids: newPlan.salad_ids || []
         }])
         .select();
 
@@ -233,7 +387,6 @@ export const ContentProvider = ({ children }) => {
     }
   };
 
-  // Update an existing salad plan
   const updateSaladPlan = async (id, updatedPlan) => {
     setSaladPlans(prev => {
       const updated = prev.map(plan => plan.id === id ? { ...plan, ...updatedPlan } : plan);
@@ -253,9 +406,7 @@ export const ContentProvider = ({ children }) => {
           price_monthly: parseFloat(updatedPlan.price_monthly),
           price_pack: parseFloat(updatedPlan.price_pack) || 0,
           pack_name: updatedPlan.pack_name || '10 Pack',
-          ingredients: updatedPlan.ingredients,
-          tags: updatedPlan.tags,
-          image_url: updatedPlan.image_url
+          salad_ids: updatedPlan.salad_ids || []
         })
         .eq('id', id);
 
@@ -266,7 +417,6 @@ export const ContentProvider = ({ children }) => {
     }
   };
 
-  // Delete a salad plan
   const deleteSaladPlan = async (id) => {
     setSaladPlans(prev => {
       const updated = prev.filter(plan => plan.id !== id);
@@ -292,11 +442,15 @@ export const ContentProvider = ({ children }) => {
   return (
     <ContentContext.Provider value={{
       siteSettings,
+      salads,
       saladPlans,
       loading,
       isDemoMode,
       updateSiteSetting,
       updateMultipleSettings,
+      addSalad,
+      updateSalad,
+      deleteSalad,
       addSaladPlan,
       updateSaladPlan,
       deleteSaladPlan

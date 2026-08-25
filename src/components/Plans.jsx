@@ -1,16 +1,12 @@
 import React, { useState } from 'react';
-import { Check, Flame, MessageSquare } from 'lucide-react';
+import { Check, MessageSquare, Salad } from 'lucide-react';
 import { useContent } from '../context/ContentContext';
 
 const Plans = () => {
-  const { saladPlans, siteSettings } = useContent();
-  const [billingPeriod, setBillingPeriod] = useState('weekly'); // 'weekly' or 'monthly'
-
-  const phone = siteSettings.contact_phone || '';
-  const email = siteSettings.contact_email || '';
+  const { saladPlans, salads, siteSettings } = useContent();
+  const [billingPeriod, setBillingPeriod] = useState('weekly'); // 'weekly', 'monthly', or 'pack'
 
   const handleSelectPlan = (planTitle) => {
-    // Scroll to contact section
     const contactSection = document.getElementById('contact');
     if (contactSection) {
       contactSection.scrollIntoView({ behavior: 'smooth' });
@@ -42,7 +38,7 @@ const Plans = () => {
             color: 'var(--text-muted)',
             fontSize: '16px'
           }}>
-            Explore our chef-curated subscription plans. Get fresh, calorie-counted, nutritionally balanced salads delivered daily.
+            Explore our curated meal plan subscription options. Get fresh, chef-prepared salads made from 100% organic ingredients delivered daily.
           </p>
 
           {/* Weekly / Monthly / Fix Pack Toggle */}
@@ -127,6 +123,18 @@ const Plans = () => {
               priceLabel = `For ${plan.pack_name || '10 Pack'}`;
               price = plan.price_pack;
             }
+
+            // Resolve selected salads details
+            const selectedSalads = salads.filter(s => plan.salad_ids?.includes(s.id));
+            
+            // Compile unified ingredients and tags
+            const compiledIngredients = Array.from(
+              new Set(selectedSalads.flatMap(s => s.ingredients || []))
+            );
+            
+            const compiledTags = Array.from(
+              new Set(selectedSalads.flatMap(s => s.tags || []))
+            );
             
             return (
               <div 
@@ -187,7 +195,7 @@ const Plans = () => {
                 }}>
                   {/* Tags */}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '14px' }}>
-                    {plan.tags && plan.tags.map((tag, idx) => (
+                    {compiledTags.map((tag, idx) => (
                       <span 
                         key={idx} 
                         className="badge" 
@@ -215,14 +223,30 @@ const Plans = () => {
                     fontSize: '14px',
                     color: 'var(--text-muted)',
                     lineHeight: '1.5',
-                    marginBottom: '20px',
-                    flexGrow: 1
+                    marginBottom: '20px'
                   }}>
                     {plan.description}
                   </p>
 
+                  {/* Included Salads */}
+                  {selectedSalads.length > 0 && (
+                    <div style={{ marginBottom: '16px', backgroundColor: 'var(--bg-color)', padding: '12px 16px', borderRadius: 'var(--radius-sm)', borderLeft: '3px solid var(--primary)' }}>
+                      <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Salad size={14} style={{ color: 'var(--primary)' }} />
+                        Included Salad Recipes:
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 12px' }}>
+                        {selectedSalads.map(salad => (
+                          <span key={salad.id} style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)' }}>
+                            • {salad.title}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Ingredients Header */}
-                  <div style={{ marginBottom: '24px' }}>
+                  <div style={{ marginBottom: '24px', flexGrow: 1 }}>
                     <p style={{
                       fontSize: '12px',
                       fontWeight: 700,
@@ -231,10 +255,10 @@ const Plans = () => {
                       letterSpacing: '0.5px',
                       marginBottom: '10px'
                     }}>
-                      Ingredients included:
+                      Unified Ingredients:
                     </p>
                     <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {plan.ingredients && plan.ingredients.map((ing, idx) => (
+                      {compiledIngredients.map((ing, idx) => (
                         <li key={idx} style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -246,6 +270,11 @@ const Plans = () => {
                           <span>{ing}</span>
                         </li>
                       ))}
+                      {compiledIngredients.length === 0 && (
+                        <li style={{ fontSize: '13px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                          No salads associated with this plan.
+                        </li>
+                      )}
                     </ul>
                   </div>
 

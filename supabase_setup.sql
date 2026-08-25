@@ -3,6 +3,7 @@
 
 -- 1. Drop existing tables if they exist (clean start)
 DROP TABLE IF EXISTS salad_plans;
+DROP TABLE IF EXISTS salads;
 DROP TABLE IF EXISTS site_settings;
 
 -- 2. Create site_settings table
@@ -12,7 +13,19 @@ CREATE TABLE site_settings (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
 );
 
--- 3. Create salad_plans table
+-- 3. Create salads table (Individual salads)
+CREATE TABLE salads (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title TEXT NOT NULL,
+    description TEXT,
+    price NUMERIC NOT NULL DEFAULT 0,
+    image_url TEXT,
+    ingredients TEXT[] DEFAULT '{}',
+    tags TEXT[] DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
+);
+
+-- 4. Create salad_plans table (Subscription plans composed of salads)
 CREATE TABLE salad_plans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
@@ -21,13 +34,11 @@ CREATE TABLE salad_plans (
     price_monthly NUMERIC NOT NULL,
     price_pack NUMERIC NOT NULL DEFAULT 0,
     pack_name TEXT DEFAULT '10 Pack',
-    ingredients TEXT[] DEFAULT '{}',
-    tags TEXT[] DEFAULT '{}',
-    image_url TEXT,
+    salad_ids UUID[] DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
 );
 
--- 4. Insert Default Site Settings
+-- 5. Insert Default Site Settings
 INSERT INTO site_settings (key, value) VALUES
 ('business_name', 'Nutribox'),
 ('logo_url', ''),
@@ -40,59 +51,56 @@ INSERT INTO site_settings (key, value) VALUES
 ('admin_passcode', 'admin123')
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
--- 5. Insert Default Salad Plans
-INSERT INTO salad_plans (title, description, price_weekly, price_monthly, price_pack, pack_name, ingredients, tags, image_url) VALUES
+-- 6. Insert Default Salads (Temporary variables to hold IDs)
+-- We will use a script block or standard insert and select to populate relation.
+-- To keep the SQL editor copy-paste simple, we insert salads first:
+INSERT INTO salads (id, title, description, price, ingredients, tags, image_url) VALUES
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Garden Greens Salad', 'Fresh leafy greens, cucumber, tomatoes, and organic seeds.', 150, ARRAY['Baby Spinach', 'Arugula', 'Cucumber', 'Cherry Tomatoes', 'Pumpkin Seeds', 'Lemon Vinaigrette'], ARRAY['Low Carb', 'Vegan', 'Organic'], 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600'),
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12', 'Protein Booster Salad', 'Grilled chicken breast with almonds, greens, and broccoli.', 220, ARRAY['Grilled Chicken Breast', 'Mixed Greens', 'Broccoli Florets', 'Almonds', 'Tahini Dressing'], ARRAY['High Protein', 'Gluten Free'], 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=600'),
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13', 'Keto Smoked Salmon', 'High healthy fats from smoked salmon, hard boiled egg, and walnuts.', 250, ARRAY['Smoked Salmon', 'Hard Boiled Egg', 'Spinach', 'Kale', 'Avocado', 'Walnuts', 'Olive Oil & Herbs'], ARRAY['Keto', 'High Fat', 'Gluten Free'], 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600'),
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14', 'Feta Berry Crunch', 'Vegetarian delight with crumbled feta, fresh berries, and walnuts.', 180, ARRAY['Feta Cheese', 'Strawberries', 'Spinach', 'Walnuts', 'Balsamic Vinaigrette'], ARRAY['Vegetarian', 'Gluten Free'], 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&q=80&w=600');
+
+-- 7. Insert Default Salad Plans linked to Salads
+INSERT INTO salad_plans (title, description, price_weekly, price_monthly, price_pack, pack_name, salad_ids) VALUES
 (
-  'Lean & Green', 
-  'Designed for weight loss and detoxification. High in fiber, low in carbs, and packed with fresh leafy greens.', 
+  'Lean & Green Plan', 
+  'Designed for weight loss and detoxification. Combines our Garden Greens and Feta Berry salads.', 
   699, 
   2499, 
   400,
   '10 Pack',
-  ARRAY['Baby Spinach', 'Arugula', 'Cucumber', 'Cherry Tomatoes', 'Avocado', 'Pumpkin Seeds', 'Lemon Vinaigrette'], 
-  ARRAY['Low Carb', 'Weight Loss', 'Vegan'], 
-  'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600'
+  ARRAY['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'::UUID, 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14'::UUID]
 ),
 (
-  'Protein Powerhouse', 
-  'Rich in clean proteins to support muscle growth and recovery. Balanced with wholesome grains and nuts.', 
+  'Protein Powerhouse Plan', 
+  'Support muscle recovery with high protein chicken and salmon options.', 
   899, 
   3199, 
   500,
   '10 Pack',
-  ARRAY['Grilled Chicken Breast', 'Quinoa', 'Mixed Greens', 'Broccoli Florets', 'Feta Cheese', 'Almonds', 'Tahini Dressing'], 
-  ARRAY['High Protein', 'Gluten Free', 'Active Lifestyle'], 
-  'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=600'
+  ARRAY['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12'::UUID, 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13'::UUID]
 ),
 (
-  'Keto Balance', 
-  'High healthy fats, moderate protein, and ultra-low carbs. Kept delicious with premium cheeses and dressings.', 
+  'Keto Balance Plan', 
+  'Ultra-low carb plan syncing our healthy Keto Smoked Salmon and Garden Greens salads.', 
   849, 
   2999, 
   450,
   '10 Pack',
-  ARRAY['Smoked Salmon', 'Hard Boiled Egg', 'Spinach', 'Kale', 'Avocado', 'Walnuts', 'Olive Oil & Herbs'], 
-  ARRAY['Keto', 'High Fat', 'Gluten Free'], 
-  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600'
+  ARRAY['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'::UUID, 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13'::UUID]
 );
 
--- 6. Row-Level Security (RLS) Configuration
--- Enable RLS for security
+-- 8. Row-Level Security (RLS) Configuration
 ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE salads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE salad_plans ENABLE ROW LEVEL SECURITY;
 
--- Create Policies to allow ANYONE to read settings and plans
-CREATE POLICY "Allow public read on site_settings" ON site_settings
-    FOR SELECT USING (true);
+-- Read policies
+CREATE POLICY "Allow public read on site_settings" ON site_settings FOR SELECT USING (true);
+CREATE POLICY "Allow public read on salads" ON salads FOR SELECT USING (true);
+CREATE POLICY "Allow public read on salad_plans" ON salad_plans FOR SELECT USING (true);
 
-CREATE POLICY "Allow public read on salad_plans" ON salad_plans
-    FOR SELECT USING (true);
-
--- For simple passcode-based authentication from a static client, we allow authenticated
--- users or custom rules. For development simplicity, we will allow all operations.
--- WARNING: In production, you should lock this down using Supabase Auth or service role.
-CREATE POLICY "Allow public write on site_settings" ON site_settings
-    FOR ALL USING (true) WITH CHECK (true);
-
-CREATE POLICY "Allow public write on salad_plans" ON salad_plans
-    FOR ALL USING (true) WITH CHECK (true);
+-- Write policies
+CREATE POLICY "Allow public write on site_settings" ON site_settings FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public write on salads" ON salads FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public write on salad_plans" ON salad_plans FOR ALL USING (true) WITH CHECK (true);

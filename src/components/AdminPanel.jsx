@@ -2,14 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, LayoutGrid, FileText, Database, Plus, Trash2, Edit2, 
-  Check, AlertTriangle, HelpCircle, Save, LogOut, CheckCircle, ShieldAlert
+  Check, AlertTriangle, HelpCircle, Save, LogOut, CheckCircle, ShieldAlert, Salad
 } from 'lucide-react';
 import { useContent } from '../context/ContentContext';
 
 const AdminPanel = () => {
   const { 
-    siteSettings, saladPlans, isDemoMode, 
-    updateMultipleSettings, addSaladPlan, updateSaladPlan, deleteSaladPlan 
+    siteSettings, salads, saladPlans, isDemoMode, 
+    updateMultipleSettings, addSalad, updateSalad, deleteSalad,
+    addSaladPlan, updateSaladPlan, deleteSaladPlan 
   } = useContent();
 
   const navigate = useNavigate();
@@ -18,10 +19,22 @@ const AdminPanel = () => {
   const [authError, setAuthError] = useState('');
 
   // Active tab state
-  const [activeTab, setActiveTab] = useState('plans'); // 'plans', 'settings', 'database'
+  const [activeTab, setActiveTab] = useState('salads'); // 'salads', 'plans', 'settings', 'database'
 
   // Alert state
   const [alert, setAlert] = useState({ show: false, message: '', type: 'success' });
+
+  // Salad editor states
+  const [editingSaladId, setEditingSaladId] = useState(null); // null = new, id = edit
+  const [isSaladFormOpen, setIsSaladFormOpen] = useState(false);
+  const [saladForm, setSaladForm] = useState({
+    title: '',
+    description: '',
+    price: '',
+    image_url: '',
+    ingredients_raw: '',
+    tags_raw: ''
+  });
 
   // Plan editor states
   const [editingPlanId, setEditingPlanId] = useState(null); // null = new, id = edit
@@ -34,8 +47,7 @@ const AdminPanel = () => {
     price_pack: '',
     pack_name: '10 Pack',
     image_url: '',
-    ingredients_raw: '',
-    tags_raw: ''
+    salad_ids: []
   });
 
   // Settings form state
@@ -114,7 +126,79 @@ const AdminPanel = () => {
     }
   };
 
-  // Edit plan trigger
+  // ==========================================
+  // SALADS OPERATIONS
+  // ==========================================
+  const openEditSalad = (salad) => {
+    setEditingSaladId(salad.id);
+    setSaladForm({
+      title: salad.title || '',
+      description: salad.description || '',
+      price: salad.price || '',
+      image_url: salad.image_url || '',
+      ingredients_raw: salad.ingredients ? salad.ingredients.join(', ') : '',
+      tags_raw: salad.tags ? salad.tags.join(', ') : ''
+    });
+    setIsSaladFormOpen(true);
+  };
+
+  const openNewSalad = () => {
+    setEditingSaladId(null);
+    setSaladForm({
+      title: '',
+      description: '',
+      price: '',
+      image_url: '',
+      ingredients_raw: '',
+      tags_raw: ''
+    });
+    setIsSaladFormOpen(true);
+  };
+
+  const handleSaladSubmit = async (e) => {
+    e.preventDefault();
+    if (!saladForm.title || !saladForm.price) {
+      triggerAlert('Salad Name and Price are required!', 'error');
+      return;
+    }
+
+    const processedSalad = {
+      title: saladForm.title,
+      description: saladForm.description,
+      price: parseFloat(saladForm.price),
+      image_url: saladForm.image_url || 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600',
+      ingredients: saladForm.ingredients_raw.split(',').map(i => i.trim()).filter(Boolean),
+      tags: saladForm.tags_raw.split(',').map(t => t.trim()).filter(Boolean)
+    };
+
+    try {
+      if (editingSaladId) {
+        await updateSalad(editingSaladId, processedSalad);
+        triggerAlert('Salad recipe updated successfully!');
+      } else {
+        await addSalad(processedSalad);
+        triggerAlert('New salad recipe added successfully!');
+      }
+      setIsSaladFormOpen(false);
+    } catch (err) {
+      triggerAlert('Failed to save salad. Please try again.', 'error');
+    }
+  };
+
+  const handleDeleteSalad = async (id, title) => {
+    if (window.confirm(`Are you sure you want to delete the salad recipe: "${title}"?\nThis will automatically remove it from any Salad Plans.`)) {
+      try {
+        await deleteSalad(id);
+        triggerAlert(`Salad recipe "${title}" deleted successfully.`);
+      } catch (err) {
+        triggerAlert('Failed to delete salad.', 'error');
+      }
+    }
+  };
+
+  // ==========================================
+  // SALAD PLANS OPERATIONS
+  // ==========================================
   const openEditPlan = (plan) => {
     setEditingPlanId(plan.id);
     setPlanForm({
@@ -125,8 +209,7 @@ const AdminPanel = () => {
       price_pack: plan.price_pack || '',
       pack_name: plan.pack_name || '10 Pack',
       image_url: plan.image_url || '',
-      ingredients_raw: plan.ingredients ? plan.ingredients.join(', ') : '',
-      tags_raw: plan.tags ? plan.tags.join(', ') : ''
+      salad_ids: plan.salad_ids || []
     });
     setIsPlanFormOpen(true);
   };
@@ -141,16 +224,13 @@ const AdminPanel = () => {
       price_pack: '',
       pack_name: '10 Pack',
       image_url: '',
-      ingredients_raw: '',
-      tags_raw: ''
+      salad_ids: []
     });
     setIsPlanFormOpen(true);
   };
 
-  // Salad Plan CRUD operations
   const handlePlanSubmit = async (e) => {
     e.preventDefault();
-    
     if (!planForm.title || !planForm.price_weekly || !planForm.price_monthly) {
       triggerAlert('Title, Weekly Price, and Monthly Price are required fields!', 'error');
       return;
@@ -163,9 +243,8 @@ const AdminPanel = () => {
       price_monthly: parseFloat(planForm.price_monthly),
       price_pack: parseFloat(planForm.price_pack) || 0,
       pack_name: planForm.pack_name || '10 Pack',
-      image_url: planForm.image_url || 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600',
-      ingredients: planForm.ingredients_raw.split(',').map(i => i.trim()).filter(Boolean),
-      tags: planForm.tags_raw.split(',').map(t => t.trim()).filter(Boolean)
+      image_url: planForm.image_url || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=600',
+      salad_ids: planForm.salad_ids || []
     };
 
     try {
@@ -229,7 +308,7 @@ const AdminPanel = () => {
             Admin Access Required
           </h2>
           <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '32px' }}>
-            Please enter your administrator passcode to manage salad plans and configurations.
+            Please enter your administrator passcode to manage salad configurations.
           </p>
 
           <form onSubmit={handleAuth}>
@@ -386,7 +465,19 @@ const AdminPanel = () => {
         {/* Left Sidebar Menu */}
         <aside style={{ display: 'flex', flexDirection: 'column', gap: '8px' }} className="admin-sidebar">
           <button 
-            onClick={() => { setActiveTab('plans'); setIsPlanFormOpen(false); }}
+            onClick={() => { setActiveTab('salads'); setIsPlanFormOpen(false); setIsSaladFormOpen(false); }}
+            style={{
+              ...sidebarBtnStyle,
+              backgroundColor: activeTab === 'salads' ? 'var(--primary-light)' : 'transparent',
+              color: activeTab === 'salads' ? 'var(--primary)' : 'var(--text-muted)',
+              fontWeight: activeTab === 'salads' ? 700 : 500
+            }}
+          >
+            <Salad size={18} />
+            Salads Recipes
+          </button>
+          <button 
+            onClick={() => { setActiveTab('plans'); setIsPlanFormOpen(false); setIsSaladFormOpen(false); }}
             style={{
               ...sidebarBtnStyle,
               backgroundColor: activeTab === 'plans' ? 'var(--primary-light)' : 'transparent',
@@ -398,7 +489,7 @@ const AdminPanel = () => {
             Salad Plans
           </button>
           <button 
-            onClick={() => { setActiveTab('settings'); setIsPlanFormOpen(false); }}
+            onClick={() => { setActiveTab('settings'); setIsPlanFormOpen(false); setIsSaladFormOpen(false); }}
             style={{
               ...sidebarBtnStyle,
               backgroundColor: activeTab === 'settings' ? 'var(--primary-light)' : 'transparent',
@@ -410,7 +501,7 @@ const AdminPanel = () => {
             Site Settings
           </button>
           <button 
-            onClick={() => { setActiveTab('database'); setIsPlanFormOpen(false); }}
+            onClick={() => { setActiveTab('database'); setIsPlanFormOpen(false); setIsSaladFormOpen(false); }}
             style={{
               ...sidebarBtnStyle,
               backgroundColor: activeTab === 'database' ? 'var(--primary-light)' : 'transparent',
@@ -426,7 +517,194 @@ const AdminPanel = () => {
         {/* Right Dashboard Content Panel */}
         <main className="glass-card" style={{ padding: '36px', textAlign: 'left', minHeight: '400px' }}>
           
-          {/* Tab 1: Salad Plans CRUD */}
+          {/* TAB: SALADS CRUD */}
+          {activeTab === 'salads' && (
+            <>
+              {!isSaladFormOpen ? (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                    <div>
+                      <h3 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-main)' }}>Manage Salads</h3>
+                      <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Configure specific salads and their ingredients, which can be linked to your plans.</p>
+                    </div>
+                    <button onClick={openNewSalad} className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '14px' }}>
+                      <Plus size={16} />
+                      Add Salad
+                    </button>
+                  </div>
+
+                  <div style={{ overflowX: 'auto' }}>
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Photo</th>
+                          <th>Salad Title</th>
+                          <th>Base Price</th>
+                          <th>Ingredients</th>
+                          <th>Tags</th>
+                          <th style={{ textAlign: 'right' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {salads.map(salad => (
+                          <tr key={salad.id}>
+                            <td>
+                              <img 
+                                src={salad.image_url} 
+                                alt={salad.title} 
+                                style={{ width: '45px', height: '45px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border-color)' }}
+                              />
+                            </td>
+                            <td>
+                              <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{salad.title}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '200px' }}>{salad.description}</div>
+                            </td>
+                            <td style={{ fontWeight: 600 }}>₹{salad.price}</td>
+                            <td>
+                              <div style={{ fontSize: '12px', color: 'var(--text-main)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {salad.ingredients ? salad.ingredients.join(', ') : '-'}
+                              </div>
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                {salad.tags?.slice(0, 2).map((t, i) => (
+                                  <span key={i} className="badge" style={{ fontSize: '9px', padding: '2px 6px', backgroundColor: 'var(--primary-light)', color: 'var(--primary)' }}>
+                                    {t}
+                                  </span>
+                                ))}
+                                {salad.tags?.length > 2 && <span style={{ fontSize: '10px' }}>+{salad.tags.length - 2}</span>}
+                              </div>
+                            </td>
+                            <td style={{ textAlign: 'right' }}>
+                              <div style={{ display: 'inline-flex', gap: '8px' }}>
+                                <button 
+                                  onClick={() => openEditSalad(salad)}
+                                  style={actionBtnStyle}
+                                  title="Edit Salad"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteSalad(salad.id, salad.title)}
+                                  style={{ ...actionBtnStyle, color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.2)' }}
+                                  title="Delete Salad"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {salads.length === 0 && (
+                          <tr>
+                            <td colSpan="6" style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
+                              No salads configured. Click "Add Salad" to build one.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              ) : (
+                // Add / Edit Salad Form UI
+                <form onSubmit={handleSaladSubmit}>
+                  <h3 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '24px' }}>
+                    {editingSaladId ? 'Edit Salad Recipe' : 'Create New Salad Recipe'}
+                  </h3>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
+                    <div className="admin-input-group">
+                      <label className="admin-label">Salad Name *</label>
+                      <input 
+                        type="text" 
+                        value={saladForm.title}
+                        onChange={(e) => setSaladForm({...saladForm, title: e.target.value})}
+                        placeholder="e.g. Avocado Crunch Bowl"
+                        className="admin-input"
+                        required
+                      />
+                    </div>
+                    <div className="admin-input-group">
+                      <label className="admin-label">Price (₹) *</label>
+                      <input 
+                        type="number" 
+                        value={saladForm.price}
+                        onChange={(e) => setSaladForm({...saladForm, price: e.target.value})}
+                        placeholder="180"
+                        className="admin-input"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
+                    <div className="admin-input-group">
+                      <label className="admin-label">Image Photo URL</label>
+                      <input 
+                        type="text" 
+                        value={saladForm.image_url}
+                        onChange={(e) => setSaladForm({...saladForm, image_url: e.target.value})}
+                        placeholder="https://images.unsplash.com/..."
+                        className="admin-input"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="admin-input-group">
+                    <label className="admin-label">Description</label>
+                    <textarea 
+                      value={saladForm.description}
+                      onChange={(e) => setSaladForm({...saladForm, description: e.target.value})}
+                      placeholder="Recipe summary details..."
+                      className="admin-textarea"
+                    />
+                  </div>
+
+                  <div className="admin-input-group">
+                    <label className="admin-label">Ingredients (Comma-separated list)</label>
+                    <input 
+                      type="text" 
+                      value={saladForm.ingredients_raw}
+                      onChange={(e) => setSaladForm({...saladForm, ingredients_raw: e.target.value})}
+                      placeholder="Baby Spinach, Cucumber, Tomatoes, Avocado, Feta"
+                      className="admin-input"
+                    />
+                  </div>
+
+                  <div className="admin-input-group">
+                    <label className="admin-label">Tags (Comma-separated list)</label>
+                    <input 
+                      type="text" 
+                      value={saladForm.tags_raw}
+                      onChange={(e) => setSaladForm({...saladForm, tags_raw: e.target.value})}
+                      placeholder="Keto, Vegan, High Protein, Gluten Free"
+                      className="admin-input"
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '16px', marginTop: '30px', borderTop: '1px solid var(--border-color)', paddingTop: '24px' }}>
+                    <button 
+                      type="button" 
+                      onClick={() => setIsSaladFormOpen(false)} 
+                      className="btn btn-secondary"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      className="btn btn-primary"
+                    >
+                      <Save size={16} />
+                      Save Salad Recipe
+                    </button>
+                  </div>
+                </form>
+              )}
+            </>
+          )}
+
+          {/* TAB 1: Salad Plans CRUD */}
           {activeTab === 'plans' && (
             <>
               {!isPlanFormOpen ? (
@@ -434,7 +712,7 @@ const AdminPanel = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                     <div>
                       <h3 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-main)' }}>Manage Salad Plans</h3>
-                      <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Configure subscription salad meals displayed on the homepage.</p>
+                      <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Configure subscription salad packages displayed on the homepage.</p>
                     </div>
                     <button onClick={openNewPlan} className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '14px' }}>
                       <Plus size={16} />
@@ -451,6 +729,7 @@ const AdminPanel = () => {
                           <th>Weekly Price</th>
                           <th>Monthly Price</th>
                           <th>Fix Pack Price</th>
+                          <th>Salads Count</th>
                           <th style={{ textAlign: 'right' }}>Actions</th>
                         </tr>
                       </thead>
@@ -466,11 +745,16 @@ const AdminPanel = () => {
                             </td>
                             <td>
                               <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{plan.title}</div>
-                              <div style={{ fontSize: '11px', color: 'var(--text-muted)', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '300px' }}>{plan.description}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '250px' }}>{plan.description}</div>
                             </td>
                             <td style={{ fontWeight: 600 }}>₹{plan.price_weekly}</td>
                             <td style={{ fontWeight: 600 }}>₹{plan.price_monthly}</td>
                             <td>₹{plan.price_pack || 0} ({plan.pack_name || '10 Pack'})</td>
+                            <td>
+                              <span className="badge" style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)' }}>
+                                {plan.salad_ids ? plan.salad_ids.length : 0} Salads
+                              </span>
+                            </td>
                             <td style={{ textAlign: 'right' }}>
                               <div style={{ display: 'inline-flex', gap: '8px' }}>
                                 <button 
@@ -493,7 +777,7 @@ const AdminPanel = () => {
                         ))}
                         {saladPlans.length === 0 && (
                           <tr>
-                            <td colSpan="6" style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
+                            <td colSpan="7" style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
                               No plans configured. Click "Add Salad Plan" to create one.
                             </td>
                           </tr>
@@ -516,7 +800,7 @@ const AdminPanel = () => {
                         type="text" 
                         value={planForm.title}
                         onChange={(e) => setPlanForm({...planForm, title: e.target.value})}
-                        placeholder="e.g. Avocado Crunch Bowl"
+                        placeholder="e.g. Fit & Lean Summer Plan"
                         className="admin-input"
                         required
                       />
@@ -538,12 +822,67 @@ const AdminPanel = () => {
                     <textarea 
                       value={planForm.description}
                       onChange={(e) => setPlanForm({...planForm, description: e.target.value})}
-                      placeholder="Explain details, target dietary objective..."
+                      placeholder="Explain details, target subscription audience..."
                       className="admin-textarea"
                     />
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px' }} className="price-inputs">
+                  {/* Multi-Select checklist of salads */}
+                  <div className="admin-input-group" style={{ gridColumn: 'span 2' }}>
+                    <label className="admin-label" style={{ fontWeight: 600, display: 'block', marginBottom: '8px' }}>
+                      Select salads to include in this plan *
+                    </label>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+                      gap: '12px',
+                      border: '1px solid var(--border-color)',
+                      padding: '16px',
+                      borderRadius: 'var(--radius-sm)',
+                      backgroundColor: 'var(--bg-color)',
+                      maxHeight: '200px',
+                      overflowY: 'auto'
+                    }}>
+                      {salads.map(salad => {
+                        const isChecked = planForm.salad_ids?.includes(salad.id);
+                        return (
+                          <label key={salad.id} style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            fontSize: '13px',
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                            padding: '4px',
+                            borderRadius: '4px',
+                            backgroundColor: isChecked ? 'var(--primary-light)' : 'transparent',
+                            transition: 'var(--transition-smooth)'
+                          }}>
+                            <input 
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {
+                                const currentIds = planForm.salad_ids || [];
+                                const updatedIds = isChecked 
+                                  ? currentIds.filter(id => id !== salad.id)
+                                  : [...currentIds, salad.id];
+                                setPlanForm({ ...planForm, salad_ids: updatedIds });
+                              }}
+                              style={{ accentColor: 'var(--primary)' }}
+                            />
+                            <span>{salad.title}</span>
+                          </label>
+                        );
+                      })}
+                      {salads.length === 0 && (
+                        <span style={{ color: 'var(--text-muted)', fontSize: '13px', gridColumn: 'span 2', textAlign: 'center' }}>
+                          No salads available. Create salads first in the "Salads Recipes" tab.
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginTop: '20px' }} className="price-inputs">
                     <div className="admin-input-group">
                       <label className="admin-label">Weekly Price (₹) *</label>
                       <input 
@@ -591,28 +930,6 @@ const AdminPanel = () => {
                     </div>
                   </div>
 
-                  <div className="admin-input-group">
-                    <label className="admin-label">Ingredients (Comma-separated list)</label>
-                    <input 
-                      type="text" 
-                      value={planForm.ingredients_raw}
-                      onChange={(e) => setPlanForm({...planForm, ingredients_raw: e.target.value})}
-                      placeholder="Baby Spinach, Cucumber, Tomatoes, Avocado, Feta"
-                      className="admin-input"
-                    />
-                  </div>
-
-                  <div className="admin-input-group">
-                    <label className="admin-label">Tags (Comma-separated list)</label>
-                    <input 
-                      type="text" 
-                      value={planForm.tags_raw}
-                      onChange={(e) => setPlanForm({...planForm, tags_raw: e.target.value})}
-                      placeholder="Keto, Vegan, High Protein, Gluten Free"
-                      className="admin-input"
-                    />
-                  </div>
-
                   <div style={{ display: 'flex', gap: '16px', marginTop: '30px', borderTop: '1px solid var(--border-color)', paddingTop: '24px' }}>
                     <button 
                       type="button" 
@@ -634,7 +951,7 @@ const AdminPanel = () => {
             </>
           )}
 
-          {/* Tab 2: Site Settings */}
+          {/* TAB 2: Site Settings */}
           {activeTab === 'settings' && (
             <form onSubmit={handleSettingsSubmit}>
               <h3 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '6px' }}>Site Content Settings</h3>
@@ -745,7 +1062,7 @@ const AdminPanel = () => {
             </form>
           )}
 
-          {/* Tab 3: Database & Cloud Config */}
+          {/* TAB 3: Database & Cloud Config */}
           {activeTab === 'database' && (
             <div>
               <h3 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '6px' }}>Database Diagnostics</h3>
