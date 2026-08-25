@@ -36,6 +36,10 @@
   --radius-full: 9999px;
   
   --transition-smooth: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  --footer-bg: hsl(142, 80%, 12%);
+  --footer-text: rgba(255, 255, 255, 0.85);
+  --footer-text-muted: rgba(255, 255, 255, 0.55);
 }
 
 [data-theme="dark"] {
@@ -49,6 +53,10 @@
   --primary-light: hsl(var(--primary-hue), 30%, 15%);
   --primary-dark: hsl(var(--primary-hue), 60%, 94%);
   --shadow-md: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  
+  --footer-bg: #070a08;
+  --footer-text: rgba(255, 255, 255, 0.85);
+  --footer-text-muted: rgba(255, 255, 255, 0.55);
 }
 
 /* Base Styles */

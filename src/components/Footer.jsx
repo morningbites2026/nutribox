@@ -9,7 +9,6 @@ const Footer = () => {
   const email = siteSettings.contact_email || '';
   const address = siteSettings.contact_address || '';
   const hours = siteSettings.business_hours || '';
-  const footerText = siteSettings.footer_text || `© ${new Date().getFullYear()} ${businessName}. All rights reserved.`;
   const deliveryInfo = siteSettings.delivery_info || '';
 
   const getCleanWhatsappLink = () => {
@@ -29,7 +28,7 @@ const Footer = () => {
         style={{
           background: 'none',
           border: 'none',
-          color: 'rgba(255, 255, 255, 0.8)',
+          color: 'var(--footer-text)',
           cursor: 'pointer',
           padding: 0,
           textAlign: 'left',
@@ -40,7 +39,7 @@ const Footer = () => {
           transition: 'color var(--transition-smooth)'
         }}
         onMouseOver={(e) => e.currentTarget.style.color = 'var(--accent)'}
-        onMouseOut={(e) => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)'}
+        onMouseOut={(e) => e.currentTarget.style.color = 'var(--footer-text)'}
       >
         {phones.join(' | ')}
       </button>
@@ -52,11 +51,12 @@ const Footer = () => {
 
   return (
     <footer id="contact" style={{
-      backgroundColor: 'var(--primary-dark)',
-      color: '#ffffff',
+      backgroundColor: 'var(--footer-bg)',
+      color: 'var(--footer-text)',
       padding: '80px 0 30px 0',
       position: 'relative',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      transition: 'var(--transition-smooth)'
     }}>
       {/* Decorative leafy overlay */}
       <div style={{
@@ -94,7 +94,7 @@ const Footer = () => {
               <span style={{ color: '#ffffff' }}>{businessName}</span>
             </div>
             <p style={{
-              color: 'rgba(255,255,255,0.7)',
+              color: 'var(--footer-text-muted)',
               fontSize: '14px',
               lineHeight: 1.6,
               maxWidth: '300px',
@@ -145,19 +145,19 @@ const Footer = () => {
               </h4>
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {siteSettings.contact_phone && (
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', color: 'rgba(255,255,255,0.8)' }}>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', color: 'var(--footer-text)' }}>
                     <Phone size={18} style={{ color: 'var(--accent)', flexShrink: 0 }} />
                     {renderPhones()}
                   </li>
                 )}
                 {email && (
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', color: 'rgba(255,255,255,0.8)' }}>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', color: 'var(--footer-text)' }}>
                     <Mail size={18} style={{ color: 'var(--accent)', flexShrink: 0 }} />
                     <a href={`mailto:${email}`} style={{ color: 'inherit', textDecoration: 'none' }}>{email}</a>
                   </li>
                 )}
                 {address && (
-                  <li style={{ display: 'flex', alignItems: 'start', gap: '12px', fontSize: '14px', color: 'rgba(255,255,255,0.8)' }}>
+                  <li style={{ display: 'flex', alignItems: 'start', gap: '12px', fontSize: '14px', color: 'var(--footer-text)' }}>
                     <MapPin size={18} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: '2px' }} />
                     <span>{address}</span>
                   </li>
@@ -179,13 +179,13 @@ const Footer = () => {
               </h4>
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {hours && (
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', color: 'rgba(255,255,255,0.8)' }}>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', color: 'var(--footer-text)' }}>
                     <Clock size={18} style={{ color: 'var(--accent)', flexShrink: 0 }} />
                     <span>{hours}</span>
                   </li>
                 )}
                 {deliveryInfo && (
-                  <li style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
+                  <li style={{ fontSize: '13px', color: 'var(--footer-text-muted)', lineHeight: 1.5 }}>
                     {deliveryInfo}
                   </li>
                 )}
@@ -194,8 +194,6 @@ const Footer = () => {
           )}
 
         </div>
-
-
       </div>
     </footer>
   );
