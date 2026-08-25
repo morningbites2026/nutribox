@@ -13,7 +13,7 @@ CREATE TABLE site_settings (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
 );
 
--- 3. Create salads table (with Half and Full Pack variant support)
+-- 3. Create salads table (Individual salads)
 CREATE TABLE salads (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
@@ -27,15 +27,13 @@ CREATE TABLE salads (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
 );
 
--- 4. Create salad_plans table (relational link via text array salad_items 'salad_id:variant')
+-- 4. Create salad_plans table (Combos)
 CREATE TABLE salad_plans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
     description TEXT,
-    price_weekly NUMERIC NOT NULL,
-    price_monthly NUMERIC NOT NULL,
-    price_pack NUMERIC NOT NULL DEFAULT 0,
-    pack_name TEXT DEFAULT '10 Pack',
+    price_half NUMERIC NOT NULL DEFAULT 0,
+    price_full NUMERIC NOT NULL DEFAULT 0,
     salad_items TEXT[] DEFAULT '{}', -- stores '[salad_id]:[variant]'
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
 );
@@ -44,7 +42,7 @@ CREATE TABLE salad_plans (
 INSERT INTO site_settings (key, value) VALUES
 ('business_name', 'Nutribox'),
 ('logo_url', ''),
-('hero_title', 'Fresh, Chef-Crafted Salad Plans Delivered to Your Doorstep'),
+('hero_title', 'Fresh, Chef-Crafted Salads & Combos Delivered to Your Doorstep'),
 ('hero_subtitle', 'Premium subscription-based healthy meal plans made with 100% organic ingredients, tailored to your dietary goals.'),
 ('contact_email', 'hello@nutribox.com'),
 ('contact_phone', '+91 98765 43210'),
@@ -60,33 +58,27 @@ INSERT INTO salads (id, title, description, variant_support, price_half, price_f
 ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13', 'Keto Smoked Salmon', 'High healthy fats from smoked salmon, hard boiled egg, and walnuts.', 'both', 170, 290, ARRAY['Smoked Salmon', 'Hard Boiled Egg', 'Spinach', 'Kale', 'Avocado', 'Walnuts', 'Olive Oil & Herbs'], ARRAY['Keto', 'High Fat', 'Gluten Free'], 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600'),
 ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14', 'Feta Berry Crunch', 'Vegetarian delight with crumbled feta, fresh berries, and walnuts.', 'both', 120, 200, ARRAY['Feta Cheese', 'Strawberries', 'Spinach', 'Walnuts', 'Balsamic Vinaigrette'], ARRAY['Vegetarian', 'Gluten Free'], 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&q=80&w=600');
 
--- 7. Insert Default Salad Plans linked to specific variants
-INSERT INTO salad_plans (title, description, price_weekly, price_monthly, price_pack, pack_name, salad_items) VALUES
+-- 7. Insert Default Combos (Plans)
+INSERT INTO salad_plans (title, description, price_half, price_full, salad_items) VALUES
 (
-  'Lean & Green Plan', 
-  'Designed for weight loss and detoxification. Includes Garden Greens (Half Pack) and Feta Berry (Full Pack).', 
-  699, 
-  2499, 
-  400,
-  '10 Pack',
+  'Detox & Greens Combo', 
+  'Combines our detoxifying Garden Greens (Half Pack) and Feta Berry Crunch (Full Pack).', 
+  220, 
+  380,
   ARRAY['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11:half', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14:full']
 ),
 (
-  'Protein Powerhouse Plan', 
-  'Support muscle recovery with high protein chicken (Full Pack) and salmon (Full Pack) options.', 
-  899, 
-  3199, 
-  500,
-  '10 Pack',
+  'Muscle Recovery Combo', 
+  'Double dose of premium protein: Protein Booster (Full Pack) and Keto Smoked Salmon (Full Pack).', 
+  320, 
+  550,
   ARRAY['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12:full', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13:full']
 ),
 (
-  'Keto Balance Plan', 
-  'Ultra-low carb plan syncing our healthy Keto Smoked Salmon (Half Pack) and Garden Greens (Half Pack) salads.', 
-  849, 
-  2999, 
-  450,
-  '10 Pack',
+  'Keto Greens Combo', 
+  'Synced low-carb recipes: Keto Smoked Salmon (Half Pack) and Garden Greens (Half Pack).', 
+  270, 
+  470,
   ARRAY['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11:half', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13:half']
 );
 

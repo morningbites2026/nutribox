@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, LayoutGrid, FileText, Database, Plus, Trash2, Edit2, 
-  Check, AlertTriangle, HelpCircle, Save, LogOut, CheckCircle, ShieldAlert, Salad
+  Check, AlertTriangle, HelpCircle, Save, LogOut, CheckCircle, ShieldAlert, Salad, Tag
 } from 'lucide-react';
 import { useContent } from '../context/ContentContext';
 
@@ -38,16 +38,14 @@ const AdminPanel = () => {
     tags_raw: ''
   });
 
-  // Plan editor states
+  // Combo Plan editor states
   const [editingPlanId, setEditingPlanId] = useState(null); // null = new, id = edit
   const [isPlanFormOpen, setIsPlanFormOpen] = useState(false);
   const [planForm, setPlanForm] = useState({
     title: '',
     description: '',
-    price_weekly: '',
-    price_monthly: '',
-    price_pack: '',
-    pack_name: '10 Pack',
+    price_half: '',
+    price_full: '',
     image_url: '',
     salad_items: [] // array of 'salad_id:variant'
   });
@@ -194,7 +192,7 @@ const AdminPanel = () => {
   };
 
   const handleDeleteSalad = async (id, title) => {
-    if (window.confirm(`Are you sure you want to delete the salad recipe: "${title}"?\nThis will automatically remove it from any Salad Plans.`)) {
+    if (window.confirm(`Are you sure you want to delete the salad recipe: "${title}"?\nThis will automatically remove it from any Curated Combos.`)) {
       try {
         await deleteSalad(id);
         triggerAlert(`Salad recipe "${title}" deleted successfully.`);
@@ -205,17 +203,15 @@ const AdminPanel = () => {
   };
 
   // ==========================================
-  // SALAD PLANS OPERATIONS
+  // COMBO PLANS OPERATIONS
   // ==========================================
   const openEditPlan = (plan) => {
     setEditingPlanId(plan.id);
     setPlanForm({
       title: plan.title || '',
       description: plan.description || '',
-      price_weekly: plan.price_weekly || '',
-      price_monthly: plan.price_monthly || '',
-      price_pack: plan.price_pack || '',
-      pack_name: plan.pack_name || '10 Pack',
+      price_half: plan.price_half || '',
+      price_full: plan.price_full || '',
       image_url: plan.image_url || '',
       salad_items: plan.salad_items || []
     });
@@ -227,10 +223,8 @@ const AdminPanel = () => {
     setPlanForm({
       title: '',
       description: '',
-      price_weekly: '',
-      price_monthly: '',
-      price_pack: '',
-      pack_name: '10 Pack',
+      price_half: '',
+      price_full: '',
       image_url: '',
       salad_items: []
     });
@@ -239,42 +233,41 @@ const AdminPanel = () => {
 
   const handlePlanSubmit = async (e) => {
     e.preventDefault();
-    if (!planForm.title || !planForm.price_weekly || !planForm.price_monthly) {
-      triggerAlert('Title, Weekly Price, and Monthly Price are required fields!', 'error');
+    if (!planForm.title) {
+      triggerAlert('Combo Name is required!', 'error');
       return;
     }
 
     const processedPlan = {
       title: planForm.title,
       description: planForm.description,
-      price_weekly: parseFloat(planForm.price_weekly),
-      price_monthly: parseFloat(planForm.price_monthly),
-      price_pack: parseFloat(planForm.price_pack) || 0,
-      pack_name: planForm.pack_name || '10 Pack',
+      price_half: parseFloat(planForm.price_half) || 0,
+      price_full: parseFloat(planForm.price_full) || 0,
+      image_url: planForm.image_url || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=600',
       salad_items: planForm.salad_items || []
     };
 
     try {
       if (editingPlanId) {
         await updateSaladPlan(editingPlanId, processedPlan);
-        triggerAlert('Salad plan updated successfully!');
+        triggerAlert('Combo Plan updated successfully!');
       } else {
         await addSaladPlan(processedPlan);
-        triggerAlert('New salad plan added successfully!');
+        triggerAlert('New Combo Plan added successfully!');
       }
       setIsPlanFormOpen(false);
     } catch (err) {
-      triggerAlert('Failed to save salad plan. Please try again.', 'error');
+      triggerAlert('Failed to save combo plan. Please try again.', 'error');
     }
   };
 
   const handleDeletePlan = async (id, title) => {
-    if (window.confirm(`Are you sure you want to delete the plan: "${title}"?`)) {
+    if (window.confirm(`Are you sure you want to delete the combo: "${title}"?`)) {
       try {
         await deleteSaladPlan(id);
-        triggerAlert(`Salad plan "${title}" deleted.`);
+        triggerAlert(`Combo "${title}" deleted.`);
       } catch (err) {
-        triggerAlert('Failed to delete plan.', 'error');
+        triggerAlert('Failed to delete combo.', 'error');
       }
     }
   };
@@ -493,7 +486,7 @@ const AdminPanel = () => {
             }}
           >
             <LayoutGrid size={18} />
-            Salad Plans
+            Curated Combos
           </button>
           <button 
             onClick={() => { setActiveTab('settings'); setIsPlanFormOpen(false); setIsSaladFormOpen(false); }}
@@ -532,7 +525,7 @@ const AdminPanel = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                     <div>
                       <h3 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-main)' }}>Manage Salads</h3>
-                      <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Configure specific salads and their ingredients, which can be linked to your plans.</p>
+                      <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Configure specific salads and their ingredients, which can be linked to your combos.</p>
                     </div>
                     <button onClick={openNewSalad} className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '14px' }}>
                       <Plus size={16} />
@@ -745,19 +738,19 @@ const AdminPanel = () => {
             </>
           )}
 
-          {/* TAB 1: Salad Plans CRUD */}
+          {/* TAB 1: Salad Plans (CURATED COMBOS) CRUD */}
           {activeTab === 'plans' && (
             <>
               {!isPlanFormOpen ? (
                 <>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                     <div>
-                      <h3 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-main)' }}>Manage Salad Plans</h3>
-                      <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Configure subscription salad packages displayed on the homepage.</p>
+                      <h3 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-main)' }}>Manage Curated Combos</h3>
+                      <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Configure combo meal deals composed of multiple salads displayed on the website.</p>
                     </div>
                     <button onClick={openNewPlan} className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '14px' }}>
                       <Plus size={16} />
-                      Add Salad Plan
+                      Add Combo Deal
                     </button>
                   </div>
 
@@ -766,10 +759,9 @@ const AdminPanel = () => {
                       <thead>
                         <tr>
                           <th>Photo</th>
-                          <th>Salad Plan Title</th>
-                          <th>Weekly Price</th>
-                          <th>Monthly Price</th>
-                          <th>Fix Pack Price</th>
+                          <th>Combo Title</th>
+                          <th>Half Combo Price</th>
+                          <th>Full Combo Price</th>
                           <th>Salads Associated</th>
                           <th style={{ textAlign: 'right' }}>Actions</th>
                         </tr>
@@ -788,9 +780,8 @@ const AdminPanel = () => {
                               <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{plan.title}</div>
                               <div style={{ fontSize: '11px', color: 'var(--text-muted)', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '250px' }}>{plan.description}</div>
                             </td>
-                            <td style={{ fontWeight: 600 }}>₹{plan.price_weekly}</td>
-                            <td style={{ fontWeight: 600 }}>₹{plan.price_monthly}</td>
-                            <td>₹{plan.price_pack || 0} ({plan.pack_name || '10 Pack'})</td>
+                            <td style={{ fontWeight: 600 }}>₹{plan.price_half}</td>
+                            <td style={{ fontWeight: 600 }}>₹{plan.price_full}</td>
                             <td>
                               <span className="badge" style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)' }}>
                                 {plan.salad_items ? plan.salad_items.length : 0} Items
@@ -801,14 +792,14 @@ const AdminPanel = () => {
                                 <button 
                                   onClick={() => openEditPlan(plan)}
                                   style={actionBtnStyle}
-                                  title="Edit Plan"
+                                  title="Edit Combo"
                                 >
                                   <Edit2 size={14} />
                                 </button>
                                 <button 
                                   onClick={() => handleDeletePlan(plan.id, plan.title)}
                                   style={{ ...actionBtnStyle, color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.2)' }}
-                                  title="Delete Plan"
+                                  title="Delete Combo"
                                 >
                                   <Trash2 size={14} />
                                 </button>
@@ -819,7 +810,7 @@ const AdminPanel = () => {
                         {saladPlans.length === 0 && (
                           <tr>
                             <td colSpan="7" style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
-                              No plans configured. Click "Add Salad Plan" to create one.
+                              No combos configured. Click "Add Combo Deal" to create one.
                             </td>
                           </tr>
                         )}
@@ -828,20 +819,20 @@ const AdminPanel = () => {
                   </div>
                 </>
               ) : (
-                // Add / Edit Form UI
+                // Add / Edit Combo Form UI
                 <form onSubmit={handlePlanSubmit}>
                   <h3 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '24px' }}>
-                    {editingPlanId ? 'Edit Salad Plan' : 'Create New Salad Plan'}
+                    {editingPlanId ? 'Edit Combo Deal' : 'Create New Combo Deal'}
                   </h3>
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
                     <div className="admin-input-group">
-                      <label className="admin-label">Salad Plan Title *</label>
+                      <label className="admin-label">Combo Title *</label>
                       <input 
                         type="text" 
                         value={planForm.title}
                         onChange={(e) => setPlanForm({...planForm, title: e.target.value})}
-                        placeholder="e.g. Fit & Lean Summer Plan"
+                        placeholder="e.g. Detox & Greens Combo"
                         className="admin-input"
                         required
                       />
@@ -859,11 +850,11 @@ const AdminPanel = () => {
                   </div>
 
                   <div className="admin-input-group">
-                    <label className="admin-label">Plan Description</label>
+                    <label className="admin-label">Combo Description</label>
                     <textarea 
                       value={planForm.description}
                       onChange={(e) => setPlanForm({...planForm, description: e.target.value})}
-                      placeholder="Explain details, target subscription audience..."
+                      placeholder="Explain what is included in this combo deal..."
                       className="admin-textarea"
                     />
                   </div>
@@ -871,7 +862,7 @@ const AdminPanel = () => {
                   {/* Multi-Select checklist of salads with Half / Full variant checkboxes */}
                   <div className="admin-input-group" style={{ gridColumn: 'span 2' }}>
                     <label className="admin-label" style={{ fontWeight: 600, display: 'block', marginBottom: '8px' }}>
-                      Select salads and variants to include in this plan *
+                      Select salads and variants to include in this combo *
                     </label>
                     <div style={{
                       display: 'flex',
@@ -953,50 +944,29 @@ const AdminPanel = () => {
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginTop: '20px' }} className="price-inputs">
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginTop: '20px' }}>
                     <div className="admin-input-group">
-                      <label className="admin-label">Weekly Price (₹) *</label>
+                      <label className="admin-label">Half Combo Price (₹) *</label>
                       <input 
                         type="number" 
                         step="0.01"
-                        value={planForm.price_weekly}
-                        onChange={(e) => setPlanForm({...planForm, price_weekly: e.target.value})}
-                        placeholder="699"
+                        value={planForm.price_half}
+                        onChange={(e) => setPlanForm({...planForm, price_half: e.target.value})}
+                        placeholder="250"
                         className="admin-input"
                         required
                       />
                     </div>
                     <div className="admin-input-group">
-                      <label className="admin-label">Monthly Price (₹) *</label>
+                      <label className="admin-label">Full Combo Price (₹) *</label>
                       <input 
                         type="number" 
                         step="0.01"
-                        value={planForm.price_monthly}
-                        onChange={(e) => setPlanForm({...planForm, price_monthly: e.target.value})}
-                        placeholder="2499"
+                        value={planForm.price_full}
+                        onChange={(e) => setPlanForm({...planForm, price_full: e.target.value})}
+                        placeholder="450"
                         className="admin-input"
                         required
-                      />
-                    </div>
-                    <div className="admin-input-group">
-                      <label className="admin-label">Pack Price (₹)</label>
-                      <input 
-                        type="number" 
-                        step="0.01"
-                        value={planForm.price_pack}
-                        onChange={(e) => setPlanForm({...planForm, price_pack: e.target.value})}
-                        placeholder="400"
-                        className="admin-input"
-                      />
-                    </div>
-                    <div className="admin-input-group">
-                      <label className="admin-label">Pack Name</label>
-                      <input 
-                        type="text" 
-                        value={planForm.pack_name}
-                        onChange={(e) => setPlanForm({...planForm, pack_name: e.target.value})}
-                        placeholder="10 Pack"
-                        className="admin-input"
                       />
                     </div>
                   </div>
@@ -1014,7 +984,7 @@ const AdminPanel = () => {
                       className="btn btn-primary"
                     >
                       <Save size={16} />
-                      Save Salad Plan
+                      Save Combo Deal
                     </button>
                   </div>
                 </form>
@@ -1242,10 +1212,6 @@ const AdminPanel = () => {
             flex-direction: column !important;
             align-items: start !important;
             gap: 8px !important;
-          }
-          .price-inputs {
-            grid-template-columns: 1fr !important;
-            gap: 0px !important;
           }
         }
       `}</style>
