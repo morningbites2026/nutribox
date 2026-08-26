@@ -50,7 +50,8 @@ const AdminPanel = () => {
     price: '',
     meals_count: '10',
     image_url: '',
-    salad_items: [] // array of 'salad_id:variant'
+    salad_items: [], // array of 'salad_id:variant'
+    active: true
   });
 
   // Settings form state
@@ -229,7 +230,8 @@ const AdminPanel = () => {
       price: plan.price || '',
       meals_count: plan.meals_count ? plan.meals_count.toString() : '10',
       image_url: plan.image_url || '',
-      salad_items: plan.salad_items || []
+      salad_items: plan.salad_items || [],
+      active: plan.active !== false
     });
     setIsPlanFormOpen(true);
   };
@@ -243,7 +245,8 @@ const AdminPanel = () => {
       price: '',
       meals_count: '10',
       image_url: '',
-      salad_items: []
+      salad_items: [],
+      active: true
     });
     setIsPlanFormOpen(true);
   };
@@ -267,7 +270,8 @@ const AdminPanel = () => {
       price: parseFloat(planForm.price),
       meals_count: parseInt(planForm.meals_count) || 10,
       image_url: planForm.image_url || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=600',
-      salad_items: planForm.salad_items || []
+      salad_items: planForm.salad_items || [],
+      active: planForm.active !== false
     };
 
     try {
@@ -986,6 +990,17 @@ const AdminPanel = () => {
                         placeholder="https://images.unsplash.com/..."
                         className="admin-input"
                       />
+                    </div>
+                    <div className="admin-input-group" style={{ display: 'flex', alignItems: 'center', marginTop: '24px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontWeight: 600, color: 'var(--text-main)' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={planForm.active !== false}
+                          onChange={(e) => setPlanForm({...planForm, active: e.target.checked})}
+                          style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: 'var(--primary)' }}
+                        />
+                        Active / Visible on Front End
+                      </label>
                     </div>
                   </div>
 

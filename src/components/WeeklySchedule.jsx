@@ -24,13 +24,9 @@ export const MealCalculator = () => {
     return titles.join(', ');
   };
 
-  // Filter plans based on admin-defined calculator setups
+  // Filter plans based on active status
   const getFilteredPlans = () => {
-    const activePlans = saladPlans.filter(p => p.active !== false);
-    const featuredStr = siteSettings.calculator_featured_plans || '';
-    const featuredIds = featuredStr.split(',').map(id => id.trim()).filter(Boolean);
-    if (featuredIds.length === 0) return activePlans;
-    return activePlans.filter(p => featuredIds.includes(p.id));
+    return saladPlans.filter(p => p.active !== false);
   };
 
   const filteredPlans = getFilteredPlans();
@@ -248,9 +244,32 @@ export const MealCalculator = () => {
                 flexDirection: 'column',
                 gap: '24px'
               }}>
-                <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--primary-dark)', margin: 0 }}>
-                  Custom Plan Summary
-                </h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--primary-dark)', margin: 0 }}>
+                    Custom Plan Summary
+                  </h3>
+                  {selectedCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPlanIds([])}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--danger)',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(239, 68, 68, 0.05)'}
+                      onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
 
                 <div>
                   <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700, display: 'block', textTransform: 'uppercase', marginBottom: '8px' }}>
