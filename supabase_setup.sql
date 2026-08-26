@@ -28,9 +28,8 @@ ALTER TABLE salads ADD COLUMN IF NOT EXISTS variant_support TEXT DEFAULT 'both';
 ALTER TABLE salads ADD COLUMN IF NOT EXISTS price_half NUMERIC DEFAULT 0;
 ALTER TABLE salads ADD COLUMN IF NOT EXISTS price_full NUMERIC DEFAULT 0;
 
--- 4. Recreate salad_plans (Combos & Single plans)
-DROP TABLE IF EXISTS salad_plans;
-CREATE TABLE salad_plans (
+-- 4. Create salad_plans if not exist
+CREATE TABLE IF NOT EXISTS salad_plans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
     description TEXT,

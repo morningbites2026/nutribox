@@ -1301,6 +1301,80 @@ const AdminPanel = () => {
                 </div>
               </div>
 
+              {/* Data Migration Option when Connected to Supabase */}
+              {!isDemoMode && (
+                <div style={{
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '24px',
+                  backgroundColor: 'var(--bg-color)',
+                  marginTop: '24px'
+                }}>
+                  <h4 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '8px' }}>
+                    📦 Migrate Local Browser Data to Cloud Database
+                  </h4>
+                  <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.5' }}>
+                    If you entered salad recipes, plans, settings, or inquiries while running in offline "Demo Mode" and would like to copy them to your connected Supabase database, you can initiate a migration now. 
+                    <br />
+                    <span style={{ color: 'var(--accent)', fontWeight: 600 }}>Note:</span> This will safely insert all your local records into your active remote database.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (window.confirm("Are you sure you want to migrate all local browser storage data into your active Supabase database?")) {
+                        try {
+                          const localSalads = JSON.parse(localStorage.getItem('nutribox_salads') || '[]');
+                          const localPlans = JSON.parse(localStorage.getItem('nutribox_plans') || '[]');
+                          const localSettings = JSON.parse(localStorage.getItem('nutribox_settings') || '{}');
+                          const localInquiries = JSON.parse(localStorage.getItem('nutribox_inquiries') || '[]');
+
+                          // Migrate Settings
+                          if (Object.keys(localSettings).length > 0) {
+                            // Strip keys that shouldn't override cloud defaults if empty
+                            const cleanSettings = { ...localSettings };
+                            delete cleanSettings.logo_url; // Don't wipe cloud logos if empty
+                            await updateMultipleSettings(cleanSettings);
+                          }
+
+                          // Migrate Salads (Insert one by one to trigger Supabase inserts)
+                          for (const salad of localSalads) {
+                            // Verify salad does not already exist by title to prevent duplicates
+                            const exists = salads.some(s => s.title.toLowerCase() === salad.title.toLowerCase());
+                            if (!exists) {
+                              const { id, created_at, ...cleanSalad } = salad; // remove offline IDs to auto-generate UUIDs
+                              await addSalad(cleanSalad);
+                            }
+                          }
+
+                          // Migrate Plans
+                          for (const plan of localPlans) {
+                            const exists = saladPlans.some(p => p.title.toLowerCase() === plan.title.toLowerCase());
+                            if (!exists) {
+                              const { id, created_at, ...cleanPlan } = plan;
+                              await addSaladPlan(cleanPlan);
+                            }
+                          }
+
+                          triggerAlert("Data migration successfully completed! Refreshing page...");
+                          setTimeout(() => {
+                            window.location.reload();
+                          }, 1500);
+                        } catch (err) {
+                          console.error("Migration failed:", err);
+                          triggerAlert("Migration failed: " + err.message, "error");
+                        }
+                      }
+                    }}
+                    className="btn btn-secondary"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                  >
+                    <Database size={16} />
+                    Start Local Storage Migration
+                  </button>
+                </div>
+              )}
+
               {/* Integration Instructions */}
               {isDemoMode && (
                 <div>
