@@ -5,7 +5,7 @@ import {
   Check, AlertTriangle, HelpCircle, Save, LogOut, CheckCircle, ShieldAlert, Salad, Settings,
   Calculator, ClipboardList
 } from 'lucide-react';
-import { useContent } from '../context/ContentContext';
+import { useContent, menuIdToUuid } from '../context/ContentContext';
 
 const AdminPanel = () => {
   const { 

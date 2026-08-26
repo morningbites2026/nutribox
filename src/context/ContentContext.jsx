@@ -10,6 +10,21 @@ export const isRecipeActive = (saladItemId, salads) => {
   return salad ? salad.active !== false : true;
 };
 
+export const menuIdToUuid = (menuItemId) => {
+  if (!menuItemId) return null;
+  const idStr = menuItemId.toString().trim();
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (uuidRegex.test(idStr)) {
+    return idStr.toLowerCase();
+  }
+  const cleanInt = parseInt(idStr.replace(/[^0-9]/g, ''), 10);
+  if (isNaN(cleanInt)) {
+    return '00000000-0000-0000-0000-000000000000';
+  }
+  const hex = cleanInt.toString(16).padStart(12, '0');
+  return `00000000-0000-0000-0000-${hex}`;
+};
+
 // Mock Initial Data for LocalStorage fallback
 const defaultSettings = {
   business_name: 'Nutribox',
@@ -433,7 +448,7 @@ export const ContentProvider = ({ children }) => {
     }
 
     const cleanSalad = {
-      id: menuItem.id.toString(),
+      id: menuIdToUuid(menuItem.id),
       title: menuItem.name || menuItem.title || 'Unnamed Salad',
       description: menuItem.description || '',
       variant_support,
