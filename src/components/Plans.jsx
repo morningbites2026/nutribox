@@ -335,6 +335,170 @@ const Plans = () => {
             </p>
           )}
         </div>
+
+        {/* Sample Packs Section */}
+        <div style={{
+          marginTop: '80px',
+          paddingTop: '60px',
+          borderTop: '1px dashed var(--border-color)',
+          textAlign: 'center'
+        }}>
+          <span style={{
+            backgroundColor: 'var(--primary-light)',
+            color: 'var(--primary)',
+            padding: '6px 14px',
+            borderRadius: 'var(--radius-full)',
+            fontSize: '12px',
+            fontWeight: 700,
+            letterSpacing: '1px',
+            textTransform: 'uppercase'
+          }}>
+            Sample Packs
+          </span>
+          <h3 className="font-serif" style={{
+            fontSize: '32px',
+            color: 'var(--primary-dark)',
+            fontWeight: 700,
+            marginTop: '16px',
+            marginBottom: '12px'
+          }}>
+            Do you want to try a sample pack?
+          </h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '15px', maxWidth: '600px', margin: '0 auto 40px auto', lineHeight: 1.6 }}>
+            You can also try the samples listed below. Select from our showcase recipes and order a single test pack to experience the taste and freshness before subscribing.
+          </p>
+
+          <div className="grid-responsive" style={{ marginTop: '30px' }}>
+            {salads.filter(s => s.active !== false).map((salad) => {
+              return (
+                <div 
+                  key={salad.id} 
+                  className="glass-card" 
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    padding: '24px',
+                    textAlign: 'left',
+                    height: '100%',
+                    position: 'relative',
+                    transition: 'var(--transition-smooth)'
+                  }}
+                >
+                  {/* Salad Image */}
+                  <div style={{
+                    height: '200px',
+                    borderRadius: 'var(--radius-md)',
+                    overflow: 'hidden',
+                    marginBottom: '20px',
+                    position: 'relative'
+                  }}>
+                    <img 
+                      src={salad.image_url || 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600'} 
+                      alt={salad.title}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    {salad.tags && salad.tags.length > 0 && (
+                      <div style={{ position: 'absolute', top: '12px', left: '12px', display: 'flex', gap: '6px' }}>
+                        {salad.tags.map((tag, i) => (
+                          <span key={i} className="badge" style={{ backgroundColor: 'var(--primary)', color: '#ffffff' }}>
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <h4 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--primary-dark)', marginBottom: '10px' }}>
+                    {salad.title}
+                  </h4>
+                  
+                  {salad.description && (
+                    <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: '1.5', marginBottom: '16px' }}>
+                      {salad.description}
+                    </p>
+                  )}
+
+                  {/* Ingredients Checklist */}
+                  <div style={{ marginBottom: '24px', flexGrow: 1 }}>
+                    <p style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      color: 'var(--text-muted)',
+                      letterSpacing: '0.5px',
+                      marginBottom: '8px'
+                    }}>
+                      Included Ingredients:
+                    </p>
+                    <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '6px', padding: 0 }}>
+                      {salad.ingredients && salad.ingredients.map((ing, idx) => (
+                        <li key={idx} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontSize: '12px',
+                          color: 'var(--text-main)'
+                        }}>
+                          <Check size={12} style={{ color: 'var(--primary)', flexShrink: 0 }} />
+                          <span>{ing}</span>
+                        </li>
+                      ))}
+                      {(!salad.ingredients || salad.ingredients.length === 0) && (
+                        <li style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                          Fresh seasonal farm veggies.
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+
+                  {/* Divider */}
+                  <div style={{
+                    height: '1px',
+                    backgroundColor: 'var(--border-color)',
+                    margin: '0 -24px 20px -24px'
+                  }} />
+
+                  {/* Price & CTA */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginTop: 'auto'
+                  }}>
+                    <div>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                        Sample pack pricing
+                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '2px' }}>
+                        {(salad.variant_support === 'half' || salad.variant_support === 'both') && (
+                          <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-main)' }}>
+                            Half Pack: <span style={{ color: 'var(--primary)' }}>₹{salad.price_half}</span>
+                          </span>
+                        )}
+                        {(salad.variant_support === 'full' || salad.variant_support === 'both') && (
+                          <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-main)' }}>
+                            Full Pack: <span style={{ color: 'var(--primary)' }}>₹{salad.price_full}</span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <button 
+                      onClick={() => setActiveSubscribePlan(`Sample Pack: ${salad.title}`)}
+                      className="btn btn-primary"
+                      style={{
+                        padding: '10px 16px',
+                        fontSize: '13px'
+                      }}
+                    >
+                      Try Sample
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </section>
   );

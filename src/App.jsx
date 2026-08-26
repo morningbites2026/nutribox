@@ -146,6 +146,11 @@ function LandingPage() {
                       {plan.title} (₹{plan.price} / {plan.meals_count} meals)
                     </option>
                   ))}
+                  {selectedPlan && !saladPlans.some(p => p.title === selectedPlan) && (
+                    <option value={selectedPlan}>
+                      {selectedPlan}
+                    </option>
+                  )}
                 </select>
               </div>
 
