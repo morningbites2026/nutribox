@@ -110,11 +110,11 @@ export const ContentProvider = ({ children }) => {
   const [inquiries, setInquiries] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Loaded active salads from existing menu_item table
+  // Loaded active salads from existing menu_items table
   const [menuItemSalads, setMenuItemSalads] = useState([
-    { id: 'm1', title: 'Garden Greens Salad', description: 'Fresh organic greens', price_half: 100, price_full: 180, image_url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600' },
-    { id: 'm2', title: 'Protein Booster Salad', description: 'High protein booster pack', price_half: 150, price_full: 260, image_url: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=600' },
-    { id: 'm3', title: 'Keto Smoked Salmon', description: 'Sweet and savory smoked salmon', price_half: 180, price_full: 320, image_url: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600' }
+    { id: 5, name: 'Sprouts Salad', description: 'Healthy sprouts mix', type: 'salad', is_active: true, options: [{name: 'Half pack', price: 45}, {name: 'Full Pack', price: 65}] },
+    { id: 19, name: 'Chickpea Salad', description: 'Zesty chickpea blend', type: 'salad', is_active: true, options: [{name: 'Half', price: 60}, {name: 'Full', price: 90}] },
+    { id: 20, name: 'Fruit salad', description: 'Fresh seasonal fruits', type: 'salad', is_active: true, options: [{name: 'Regular', price: 65}] }
   ]);
   const [isDemoMode, setIsDemoMode] = useState(true);
   const [supabaseClient, setSupabaseClient] = useState(null);
@@ -179,8 +179,8 @@ export const ContentProvider = ({ children }) => {
             const { data: menuData, error: menuError } = await supabaseClient
               .from('menu_items')
               .select('*')
-              .eq('type', 'Salad')
-              .eq('active', true);
+              .eq('type', 'salad')
+              .eq('is_active', true);
             
             if (!menuError && menuData) {
               setMenuItemSalads(menuData);
@@ -398,13 +398,42 @@ export const ContentProvider = ({ children }) => {
   };
 
   const addSaladFromMenuItem = async (menuItem) => {
+    let price_half = 0;
+    let price_full = 0;
+    let variant_support = 'both';
+
+    if (Array.isArray(menuItem.options)) {
+      if (menuItem.options.length === 1) {
+        const opt = menuItem.options[0];
+        const nameLower = (opt.name || opt.label || '').toLowerCase();
+        if (nameLower.includes('half')) {
+          price_half = opt.price || 0;
+          variant_support = 'half';
+        } else {
+          price_full = opt.price || 0;
+          variant_support = 'full';
+        }
+      } else if (menuItem.options.length >= 2) {
+        const halfOpt = menuItem.options.find(o => (o.name || o.label || '').toLowerCase().includes('half'));
+        const fullOpt = menuItem.options.find(o => (o.name || o.label || '').toLowerCase().includes('full'));
+        
+        if (halfOpt) price_half = halfOpt.price || 0;
+        if (fullOpt) price_full = fullOpt.price || 0;
+
+        if (!halfOpt && menuItem.options[0]) price_half = menuItem.options[0].price || 0;
+        if (!fullOpt && menuItem.options[1]) price_full = menuItem.options[1].price || 0;
+        
+        variant_support = 'both';
+      }
+    }
+
     const cleanSalad = {
-      id: menuItem.id,
-      title: menuItem.title || menuItem.name || 'Unnamed Salad',
+      id: menuItem.id.toString(),
+      title: menuItem.name || menuItem.title || 'Unnamed Salad',
       description: menuItem.description || '',
-      variant_support: menuItem.variant_support || 'both',
-      price_half: parseFloat(menuItem.price_half) || parseFloat(menuItem.price) || 0,
-      price_full: parseFloat(menuItem.price_full) || parseFloat(menuItem.price) || 0,
+      variant_support,
+      price_half,
+      price_full,
       image_url: menuItem.image_url || 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600',
       ingredients: menuItem.ingredients || [],
       tags: menuItem.tags || [],
@@ -427,7 +456,7 @@ export const ContentProvider = ({ children }) => {
         .upsert([cleanSalad]);
 
       if (error) {
-        console.error("Failed to upsert salad from menu_item:", error);
+        console.error("Failed to upsert salad from menu_items:", error);
         throw error;
       }
     }

@@ -637,12 +637,18 @@ const AdminPanel = () => {
                     >
                       <option value="">-- Select an Active Salad --</option>
                       {(() => {
-                        const addedIds = salads.map(s => s.id);
+                        const addedIds = salads.map(s => s.id.toString());
+                        
+                        const formatVariants = (options) => {
+                          if (!Array.isArray(options) || options.length === 0) return '';
+                          return ' (' + options.map(o => `${o.name || o.label || 'Price'}: ₹${o.price}`).join(', ') + ')';
+                        };
+
                         return menuItemSalads
-                          .filter(item => !addedIds.includes(item.id))
+                          .filter(item => !addedIds.includes(item.id.toString()))
                           .map(item => (
                             <option key={item.id} value={item.id}>
-                              {item.title || item.name || 'Unnamed Salad'}
+                              {item.name || item.title || 'Unnamed Salad'}{formatVariants(item.options)}
                             </option>
                           ));
                       })()}
