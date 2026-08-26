@@ -24,9 +24,11 @@ export const MealCalculator = () => {
     return titles.join(', ');
   };
 
-  // Filter plans based on active status
+  // Filter plans based on active status and showcase selection
   const getFilteredPlans = () => {
-    return saladPlans.filter(p => p.active !== false);
+    const showcaseStr = siteSettings.showcase_plans || '';
+    const showcaseIds = showcaseStr.split(',').map(id => id.trim()).filter(Boolean);
+    return saladPlans.filter(p => showcaseIds.includes(p.id) && p.active !== false);
   };
 
   const filteredPlans = getFilteredPlans();
