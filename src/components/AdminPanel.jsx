@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, LayoutGrid, FileText, Database, Plus, Trash2, Edit2, 
-  Check, AlertTriangle, HelpCircle, Save, LogOut, CheckCircle, ShieldAlert, Salad, Settings
+  Check, AlertTriangle, HelpCircle, Save, LogOut, CheckCircle, ShieldAlert, Salad, Settings,
+  Calculator, ClipboardList
 } from 'lucide-react';
 import { useContent } from '../context/ContentContext';
 
@@ -10,7 +11,8 @@ const AdminPanel = () => {
   const { 
     siteSettings, salads, saladPlans, isDemoMode, 
     updateMultipleSettings, addSalad, updateSalad, deleteSalad,
-    addSaladPlan, updateSaladPlan, deleteSaladPlan 
+    addSaladPlan, updateSaladPlan, deleteSaladPlan,
+    inquiries, deleteInquiry
   } = useContent();
 
   const navigate = useNavigate();
@@ -65,7 +67,9 @@ const AdminPanel = () => {
     social_whatsapp: '',
     social_instagram: '',
     footer_text: '',
-    delivery_info: ''
+    delivery_info: '',
+    calculator_whatsapp: '',
+    calculator_featured_plans: ''
   });
 
   // Initialize settings form values
@@ -84,7 +88,9 @@ const AdminPanel = () => {
         social_whatsapp: siteSettings.social_whatsapp || '',
         social_instagram: siteSettings.social_instagram || '',
         footer_text: siteSettings.footer_text || '',
-        delivery_info: siteSettings.delivery_info || ''
+        delivery_info: siteSettings.delivery_info || '',
+        calculator_whatsapp: siteSettings.calculator_whatsapp || '',
+        calculator_featured_plans: siteSettings.calculator_featured_plans || ''
       });
     }
   }, [siteSettings]);
@@ -548,6 +554,30 @@ const AdminPanel = () => {
           >
             <FileText size={18} />
             Footer Settings
+          </button>
+          <button 
+            onClick={() => { setActiveTab('calculator'); setIsPlanFormOpen(false); setIsSaladFormOpen(false); }}
+            style={{
+              ...sidebarBtnStyle,
+              backgroundColor: activeTab === 'calculator' ? 'var(--primary-light)' : 'transparent',
+              color: activeTab === 'calculator' ? 'var(--primary)' : 'var(--text-muted)',
+              fontWeight: activeTab === 'calculator' ? 700 : 500
+            }}
+          >
+            <Calculator size={18} />
+            Calculator Setup
+          </button>
+          <button 
+            onClick={() => { setActiveTab('inquiries'); setIsPlanFormOpen(false); setIsSaladFormOpen(false); }}
+            style={{
+              ...sidebarBtnStyle,
+              backgroundColor: activeTab === 'inquiries' ? 'var(--primary-light)' : 'transparent',
+              color: activeTab === 'inquiries' ? 'var(--primary)' : 'var(--text-muted)',
+              fontWeight: activeTab === 'inquiries' ? 700 : 500
+            }}
+          >
+            <ClipboardList size={18} />
+            Inquiries Log
           </button>
           <button 
             onClick={() => { setActiveTab('database'); setIsPlanFormOpen(false); setIsSaladFormOpen(false); }}
@@ -1311,6 +1341,187 @@ const AdminPanel = () => {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* TAB 4: Calculator Setup */}
+          {activeTab === 'calculator' && (
+            <form onSubmit={handleSettingsSubmit}>
+              <h3 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '6px' }}>Calculator Setup</h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '24px' }}>Configure the WhatsApp checkout number and select which Salad Plans appear in the front-end custom builder.</p>
+
+              <div className="admin-input-group">
+                <label className="admin-label">Calculator WhatsApp Number</label>
+                <input 
+                  type="text" 
+                  value={settingsForm.calculator_whatsapp}
+                  onChange={(e) => setSettingsForm({...settingsForm, calculator_whatsapp: e.target.value})}
+                  className="admin-input"
+                  placeholder="e.g. +91 94299 29822"
+                />
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  This specific number will receive the inquiry texts from the front-end calculator section.
+                </span>
+              </div>
+
+              <div className="admin-input-group" style={{ marginTop: '30px' }}>
+                <label className="admin-label" style={{ marginBottom: '12px', fontWeight: 700 }}>Choose Featured Plans for Calculator Checklist</label>
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>Check the Salad Plans you would like to make available for customized ordering. If no plans are selected, all created plans will appear.</p>
+                
+                <div style={{
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '20px',
+                  backgroundColor: 'var(--bg-color)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}>
+                  {saladPlans.map(plan => {
+                    const currentFeaturedStr = settingsForm.calculator_featured_plans || '';
+                    let currentIds = currentFeaturedStr.split(',').map(id => id.trim()).filter(Boolean);
+                    const isChecked = currentIds.includes(plan.id);
+
+                    const handlePlanCheckToggle = () => {
+                      if (isChecked) {
+                        currentIds = currentIds.filter(id => id !== plan.id);
+                      } else {
+                        currentIds.push(plan.id);
+                      }
+                      setSettingsForm({ ...settingsForm, calculator_featured_plans: currentIds.join(',') });
+                    };
+
+                    return (
+                      <label 
+                        key={plan.id} 
+                        style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '10px', 
+                          fontSize: '14px', 
+                          color: 'var(--text-main)', 
+                          cursor: 'pointer',
+                          padding: '6px 0'
+                        }}
+                      >
+                        <input 
+                          type="checkbox" 
+                          checked={isChecked} 
+                          onChange={handlePlanCheckToggle}
+                          style={{ width: '16px', height: '16px', accentColor: 'var(--primary)' }}
+                        />
+                        <span style={{ fontWeight: 600 }}>{plan.title}</span>
+                        <span style={{ color: 'var(--text-muted)' }}>(₹{plan.price} / {plan.plan_type === 'combo' ? 'Combo' : 'Individual'})</span>
+                      </label>
+                    );
+                  })}
+                  {saladPlans.length === 0 && (
+                    <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                      No salad plans found. Please add plans in the \"Salad Plans\" tab first.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ marginTop: '30px', borderTop: '1px solid var(--border-color)', paddingTop: '24px' }}>
+                <button type="submit" className="btn btn-primary">
+                  <Save size={16} />
+                  Save Calculator Setup
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* TAB 5: Inquiries Log */}
+          {activeTab === 'inquiries' && (
+            <div>
+              <h3 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '6px' }}>Inquiries Log</h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '24px' }}>Track all lead details, package inquiries, and phone numbers captured across the website.</p>
+
+              <div style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: 'var(--primary-light)', borderBottom: '1px solid var(--border-color)', color: 'var(--primary-dark)', textAlign: 'left' }}>
+                      <th style={{ padding: '16px' }}>Date & Time</th>
+                      <th style={{ padding: '16px' }}>Phone Number</th>
+                      <th style={{ padding: '16px' }}>Source Path</th>
+                      <th style={{ padding: '16px' }}>Submitted Data</th>
+                      <th style={{ padding: '16px', textAlign: 'center' }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inquiries.map((inq) => {
+                      const details = inq.submitted_data || {};
+                      const isCustom = details.inquiry_type === 'Custom Plan Calculator Combination';
+                      
+                      const renderDetails = () => {
+                        if (isCustom) {
+                          const plans = details.selected_plans || [];
+                          return (
+                            <div>
+                              <strong style={{ color: 'var(--primary)' }}>Custom Combo:</strong> {details.custom_package_name || 'N/A'}<br />
+                              <strong>Total Price:</strong> ₹{details.total_price || 0}<br />
+                              <strong>Selected:</strong> {plans.map(p => p.title).join(', ') || 'None'}<br />
+                              {details.message && <span><strong>Message:</strong> {details.message}</span>}
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div>
+                              <strong style={{ color: 'var(--accent)' }}>Plan Subscribe:</strong> {details.plan_name || 'N/A'}<br />
+                              {details.message && <span><strong>Message:</strong> {details.message}</span>}
+                            </div>
+                          );
+                        }
+                      };
+
+                      return (
+                        <tr key={inq.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background-color 0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--primary-light)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                          <td style={{ padding: '16px', whiteSpace: 'nowrap', color: 'var(--text-muted)' }}>
+                            {new Date(inq.created_at).toLocaleString()}
+                          </td>
+                          <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-main)' }}>
+                            {inq.phone_number || 'N/A'}
+                          </td>
+                          <td style={{ padding: '16px', fontFamily: 'monospace', fontSize: '12px', color: 'var(--text-muted)' }}>
+                            {inq.source_path || '/'}
+                          </td>
+                          <td style={{ padding: '16px', fontSize: '13px', lineHeight: 1.4, color: 'var(--text-main)' }}>
+                            {renderDetails()}
+                          </td>
+                          <td style={{ padding: '16px', textAlign: 'center' }}>
+                            <button 
+                              type="button" 
+                              onClick={async () => {
+                                if (window.confirm("Are you sure you want to delete this inquiry record?")) {
+                                  try {
+                                    await deleteInquiry(inq.id);
+                                    triggerAlert("Inquiry deleted successfully!");
+                                  } catch (err) {
+                                    triggerAlert("Failed to delete inquiry.", "error");
+                                  }
+                                }
+                              }} 
+                              style={{ ...actionBtnStyle, color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.2)' }}
+                              onMouseOver={(e) => { e.currentTarget.style.backgroundColor = 'var(--danger)'; e.currentTarget.style.color = '#ffffff'; }}
+                              onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'var(--card-bg)'; e.currentTarget.style.color = 'var(--danger)'; }}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {inquiries.length === 0 && (
+                      <tr>
+                        <td colSpan="5" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                          No inquiries logged yet.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 

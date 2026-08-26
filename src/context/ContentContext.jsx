@@ -17,7 +17,9 @@ const defaultSettings = {
   social_whatsapp: '+91 94299 29822',
   social_instagram: 'https://instagram.com/nutribox',
   footer_text: '© 2026 Nutribox. Fresh & Healthy Salad Subscriptions.',
-  delivery_info: 'All orders are prepared fresh at 5:00 AM each morning and dispatched for delivery in temperature-controlled boxes.'
+  delivery_info: 'All orders are prepared fresh at 5:00 AM each morning and dispatched for delivery in temperature-controlled boxes.',
+  calculator_whatsapp: '+91 94299 29822',
+  calculator_featured_plans: '' // Comma-separated plan IDs to filter display
 };
 
 const defaultSalads = [
@@ -104,6 +106,7 @@ export const ContentProvider = ({ children }) => {
   const [siteSettings, setSiteSettings] = useState(defaultSettings);
   const [salads, setSalads] = useState(defaultSalads);
   const [saladPlans, setSaladPlans] = useState(defaultPlans);
+  const [inquiries, setInquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isDemoMode, setIsDemoMode] = useState(true);
   const [supabaseClient, setSupabaseClient] = useState(null);
@@ -131,7 +134,7 @@ export const ContentProvider = ({ children }) => {
     }
   }, []);
 
-  // Fetch all settings, salads, and plans
+  // Fetch all settings, salads, plans, and inquiries
   useEffect(() => {
     const loadContent = async () => {
       setLoading(true);
@@ -173,6 +176,16 @@ export const ContentProvider = ({ children }) => {
           if (plansData) {
             setSaladPlans(plansData);
           }
+
+          // Load inquiries
+          const { data: inquiriesData, error: inquiriesError } = await supabaseClient
+            .from('inquiries')
+            .select('*')
+            .order('created_at', { ascending: false });
+          
+          if (!inquiriesError && inquiriesData) {
+            setInquiries(inquiriesData);
+          }
         } catch (error) {
           console.error("Error loading data from Supabase. Falling back to local state:", error);
           loadFromLocalStorage();
@@ -191,6 +204,7 @@ export const ContentProvider = ({ children }) => {
     const savedSettings = localStorage.getItem('nutribox_settings');
     const savedSalads = localStorage.getItem('nutribox_salads');
     const savedPlans = localStorage.getItem('nutribox_plans');
+    const savedInquiries = localStorage.getItem('nutribox_inquiries');
 
     if (savedSettings) {
       setSiteSettings(JSON.parse(savedSettings));
@@ -208,6 +222,12 @@ export const ContentProvider = ({ children }) => {
       setSaladPlans(JSON.parse(savedPlans));
     } else {
       localStorage.setItem('nutribox_plans', JSON.stringify(defaultPlans));
+    }
+
+    if (savedInquiries) {
+      setInquiries(JSON.parse(savedInquiries));
+    } else {
+      localStorage.setItem('nutribox_inquiries', JSON.stringify([]));
     }
   };
 
@@ -248,6 +268,66 @@ export const ContentProvider = ({ children }) => {
       window.location.href = `tel:${cleanPhoneNum}`;
     } else {
       setActiveDialerPhones(phones);
+    }
+  };
+
+  // ==========================================
+  // INQUIRIES OPERATIONS
+  // ==========================================
+
+  const recordInquiry = async (inquiryData) => {
+    const rawData = {
+      phone_number: inquiryData.phone_number || '',
+      source_path: inquiryData.source_path || window.location.pathname || '/',
+      submitted_data: inquiryData.submitted_data || {},
+      created_at: new Date().toISOString()
+    };
+
+    if (isDemoMode) {
+      const id = Date.now().toString();
+      const newInq = { ...rawData, id };
+      setInquiries(prev => {
+        const updated = [newInq, ...prev];
+        localStorage.setItem('nutribox_inquiries', JSON.stringify(updated));
+        return updated;
+      });
+      return newInq;
+    } else {
+      const { data, error } = await supabaseClient
+        .from('inquiries')
+        .insert([rawData])
+        .select();
+
+      if (error) {
+        console.error("Failed to insert inquiry into Supabase:", error);
+        throw error;
+      }
+      if (data && data[0]) {
+        setInquiries(prev => [data[0], ...prev]);
+        return data[0];
+      }
+    }
+  };
+
+  const deleteInquiry = async (id) => {
+    setInquiries(prev => {
+      const updated = prev.filter(i => i.id !== id);
+      if (isDemoMode) {
+        localStorage.setItem('nutribox_inquiries', JSON.stringify(updated));
+      }
+      return updated;
+    });
+
+    if (supabaseClient && !isDemoMode) {
+      const { error } = await supabaseClient
+        .from('inquiries')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error(`Failed to delete inquiry ${id} in Supabase:`, error);
+        throw error;
+      }
     }
   };
 
@@ -453,6 +533,7 @@ export const ContentProvider = ({ children }) => {
       siteSettings,
       salads,
       saladPlans,
+      inquiries,
       loading,
       isDemoMode,
       updateMultipleSettings,
@@ -461,6 +542,8 @@ export const ContentProvider = ({ children }) => {
       activeDialerPhones,
       setActiveDialerPhones,
       openPhoneDialer,
+      recordInquiry,
+      deleteInquiry,
       addSalad,
       updateSalad,
       deleteSalad,

@@ -2,10 +2,16 @@ import React, { useState } from 'react';
 import { useContent } from '../context/ContentContext';
 
 const WeeklySchedule = () => {
-  const { salads, saladPlans, siteSettings } = useContent();
+  const { salads, saladPlans, siteSettings, recordInquiry } = useContent();
 
   // State for custom meal selections: array of selected Salad Plan IDs
   const [selectedPlanIds, setSelectedPlanIds] = useState([]);
+
+  // Popup Modal states for Order Custom Plan
+  const [isOrderPopupOpen, setIsOrderPopupOpen] = useState(false);
+  const [packageName, setPackageName] = useState('');
+  const [clientPhone, setClientPhone] = useState('');
+  const [clientMessage, setClientMessage] = useState('Please share delivery slots for this custom combination!');
 
   const commitments = [
     {
@@ -82,6 +88,16 @@ const WeeklySchedule = () => {
     return titles.join(', ');
   };
 
+  // Filter plans based on admin-defined calculator setups
+  const getFilteredPlans = () => {
+    const featuredStr = siteSettings.calculator_featured_plans || '';
+    const featuredIds = featuredStr.split(',').map(id => id.trim()).filter(Boolean);
+    if (featuredIds.length === 0) return saladPlans;
+    return saladPlans.filter(p => featuredIds.includes(p.id));
+  };
+
+  const filteredPlans = getFilteredPlans();
+
   // Toggle selection state for a plan
   const handleTogglePlan = (planId) => {
     setSelectedPlanIds(prev => 
@@ -96,21 +112,57 @@ const WeeklySchedule = () => {
   const selectedCount = selectedPlans.length;
   const calculatedPrice = selectedPlans.reduce((acc, p) => acc + p.price, 0);
 
-  const handleOrderCustomPlan = () => {
+  // Trigger popup to name package and write query
+  const handleOpenPopup = () => {
     if (selectedCount === 0) return;
+    setIsOrderPopupOpen(true);
+  };
 
-    const rawNum = siteSettings.social_whatsapp || '+91 94299 29822';
+  // Final Action: Send to database and redirect to WhatsApp
+  const handleOrderCustomPlan = async (e) => {
+    e.preventDefault();
+    if (selectedCount === 0 || !packageName || !clientPhone) return;
+
+    // Log the lead in the database
+    try {
+      await recordInquiry({
+        phone_number: clientPhone,
+        source_path: window.location.pathname || '/',
+        submitted_data: {
+          inquiry_type: 'Custom Calculator Order',
+          custom_package_name: packageName,
+          selected_plans: selectedPlans.map(p => ({
+            id: p.id,
+            title: p.title,
+            price: p.price
+          })),
+          total_price: calculatedPrice,
+          message: clientMessage
+        }
+      });
+    } catch (err) {
+      console.error("Failed to insert lead inquiry logs:", err);
+    }
+
+    const rawNum = siteSettings.calculator_whatsapp || siteSettings.social_whatsapp || '+91 94299 29822';
     const cleanNum = rawNum.replace(/[^\d]/g, '');
 
     const plansLines = selectedPlans.map(
       p => `• ${p.title} (${p.plan_type === 'individual' ? 'Individual' : 'Combo'} - ₹${p.price})`
     ).join('\n');
 
-    const messageText = `Hello ${siteSettings.business_name || 'Nutribox'}!\n\nI would like to order a Custom Salad Plan combination.\n\nSelected Plans:\n${plansLines}\n\nTotal Price: *₹${calculatedPrice}*\n\nPlease confirm my custom delivery schedule!`;
+    const messageText = `Hello ${siteSettings.business_name || 'Nutribox'}!\n\nI want to order a Custom Salad Plan named: *${packageName}*.\n\nSelected Plans:\n${plansLines}\n\nTotal Price: *₹${calculatedPrice}*\nMy Phone: ${clientPhone}\nQuery: ${clientMessage}`;
     
     const encodedText = encodeURIComponent(messageText);
     const whatsappUrl = `https://wa.me/${cleanNum}?text=${encodedText}`;
+    
     window.open(whatsappUrl, '_blank');
+    
+    // Reset state & close
+    setPackageName('');
+    setClientPhone('');
+    setSelectedPlanIds([]);
+    setIsOrderPopupOpen(false);
   };
 
   return (
@@ -257,7 +309,7 @@ const WeeklySchedule = () => {
 
               {/* Plans list selection block */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {saladPlans.map(plan => {
+                {filteredPlans.map(plan => {
                   const isSelected = selectedPlanIds.includes(plan.id);
                   const isCombo = plan.plan_type === 'combo';
                   const associatedSalads = getAssociatedSaladsText(plan);
@@ -331,6 +383,11 @@ const WeeklySchedule = () => {
                     </div>
                   );
                 })}
+                {filteredPlans.length === 0 && (
+                  <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                    No featured calculator plans are currently active. Update them in the Admin Panel Calculator Setup tab.
+                  </div>
+                )}
               </div>
             </div>
 
@@ -392,7 +449,7 @@ const WeeklySchedule = () => {
 
                 <button
                   type="button"
-                  onClick={handleOrderCustomPlan}
+                  onClick={handleOpenPopup}
                   disabled={selectedCount === 0}
                   className="btn btn-primary"
                   style={{
@@ -412,6 +469,113 @@ const WeeklySchedule = () => {
 
         </div>
       </div>
+
+      {/* POPUP MODAL: Customize / Package Name Modal */}
+      {isOrderPopupOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 2000,
+          padding: '20px'
+        }}>
+          <div className="glass-card" style={{
+            maxWidth: '500px',
+            width: '100%',
+            padding: '32px',
+            backgroundColor: 'var(--card-bg)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-color)',
+            boxShadow: 'var(--shadow-lg)',
+            position: 'relative'
+          }}>
+            <button
+              onClick={() => setIsOrderPopupOpen(false)}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                fontSize: '20px'
+              }}
+            >
+              &times;
+            </button>
+
+            <h3 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--primary-dark)', marginBottom: '8px' }}>
+              Finalize Custom Combo
+            </h3>
+            <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '24px' }}>
+              Name your custom package and provide your contact phone to complete registration. This logs your lead and opens WhatsApp.
+            </p>
+
+            <form onSubmit={handleOrderCustomPlan} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="admin-input-group">
+                <label className="admin-label" style={{ fontWeight: 600 }}>Custom Package Name *</label>
+                <input
+                  type="text"
+                  value={packageName}
+                  onChange={(e) => setPackageName(e.target.value)}
+                  placeholder="e.g. My Veggie Special, Workout Pack"
+                  className="admin-input"
+                  required
+                />
+              </div>
+
+              <div className="admin-input-group">
+                <label className="admin-label" style={{ fontWeight: 600 }}>Your Phone Number *</label>
+                <input
+                  type="text"
+                  value={clientPhone}
+                  onChange={(e) => setClientPhone(e.target.value)}
+                  placeholder="e.g. +91 94299 29822"
+                  className="admin-input"
+                  required
+                />
+              </div>
+
+              <div className="admin-input-group">
+                <label className="admin-label" style={{ fontWeight: 600 }}>Query Message / Instructions</label>
+                <textarea
+                  value={clientMessage}
+                  onChange={(e) => setClientMessage(e.target.value)}
+                  placeholder="Add delivery slots or notes..."
+                  className="admin-textarea"
+                  style={{ minHeight: '80px', width: '100%' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsOrderPopupOpen(false)}
+                  className="btn btn-secondary"
+                  style={{ flex: 1, padding: '12px' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ flex: 1, padding: '12px', fontWeight: 700 }}
+                >
+                  Send & WhatsApp
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Interactivity Styles */}
       <style>{`

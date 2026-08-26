@@ -13,10 +13,11 @@ function LandingPage() {
   const { 
     activeSubscribePlan, setActiveSubscribePlan, 
     activeDialerPhones, setActiveDialerPhones, 
-    saladPlans, siteSettings 
+    saladPlans, siteSettings, recordInquiry
   } = useContent();
 
   const [selectedPlan, setSelectedPlan] = useState('');
+  const [clientPhone, setClientPhone] = useState('');
   const [queryMessage, setQueryMessage] = useState('Hi, I am interested in subscribing to this salad plan! Please let me know the daily delivery slots and payment details.');
 
   // Sync selected dropdown plan with the plan clicked by user
@@ -26,19 +27,35 @@ function LandingPage() {
     }
   }, [activeSubscribePlan]);
 
-  const handleWhatsAppSend = (e) => {
+  const handleWhatsAppSend = async (e) => {
     e.preventDefault();
     if (!selectedPlan) return;
+
+    // Log inquiry in DB/LocalStorage
+    try {
+      await recordInquiry({
+        phone_number: clientPhone,
+        source_path: window.location.pathname || '/',
+        submitted_data: {
+          inquiry_type: 'Standard Plan Subscription',
+          plan_name: selectedPlan,
+          message: queryMessage
+        }
+      });
+    } catch (err) {
+      console.error("Failed to log inquiry:", err);
+    }
 
     // Clean phone number from settings, fallback to user-specified default if not present
     const rawNum = siteSettings.social_whatsapp || '+91 94299 29822';
     const cleanNum = rawNum.replace(/[^\d]/g, '');
 
-    const messageText = `Hello ${siteSettings.business_name || 'Nutribox'}! I would like to subscribe to the plan: *${selectedPlan}*.\n\nHere is my query:\n${queryMessage}`;
+    const messageText = `Hello ${siteSettings.business_name || 'Nutribox'}!\n\nI would like to subscribe to the plan: *${selectedPlan}*.\n\nMy Phone: ${clientPhone}\nHere is my query:\n${queryMessage}`;
     const encodedText = encodeURIComponent(messageText);
     const whatsappUrl = `https://wa.me/${cleanNum}?text=${encodedText}`;
 
     window.open(whatsappUrl, '_blank');
+    setClientPhone('');
     setActiveSubscribePlan(null); // Close modal
   };
 
@@ -129,6 +146,18 @@ function LandingPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div className="admin-input-group">
+                <label className="admin-label" style={{ fontWeight: 600 }}>Your Phone Number *</label>
+                <input 
+                  type="text" 
+                  value={clientPhone}
+                  onChange={(e) => setClientPhone(e.target.value)}
+                  placeholder="e.g. +91 94299 29822"
+                  className="admin-input"
+                  required
+                />
               </div>
 
               <div className="admin-input-group">

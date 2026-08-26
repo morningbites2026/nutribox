@@ -95,20 +95,34 @@ ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE salads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE salad_plans ENABLE ROW LEVEL SECURITY;
 
+-- Create inquiries table if it doesn't exist
+CREATE TABLE IF NOT EXISTS inquiries (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    phone_number TEXT,
+    source_path TEXT,
+    submitted_data JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
+);
+ALTER TABLE inquiries ENABLE ROW LEVEL SECURITY;
+
 -- 8. Row-Level Security (RLS) Policies (Clean Drop & Recreate)
 DROP POLICY IF EXISTS "Allow public read on site_settings" ON site_settings;
 DROP POLICY IF EXISTS "Allow public read on salads" ON salads;
 DROP POLICY IF EXISTS "Allow public read on salad_plans" ON salad_plans;
+DROP POLICY IF EXISTS "Allow public read on inquiries" ON inquiries;
 
 DROP POLICY IF EXISTS "Allow public write on site_settings" ON site_settings;
 DROP POLICY IF EXISTS "Allow public write on salads" ON salads;
 DROP POLICY IF EXISTS "Allow public write on salad_plans" ON salad_plans;
+DROP POLICY IF EXISTS "Allow public write on inquiries" ON inquiries;
 
 -- Recreate policies
 CREATE POLICY "Allow public read on site_settings" ON site_settings FOR SELECT USING (true);
 CREATE POLICY "Allow public read on salads" ON salads FOR SELECT USING (true);
 CREATE POLICY "Allow public read on salad_plans" ON salad_plans FOR SELECT USING (true);
+CREATE POLICY "Allow public read on inquiries" ON inquiries FOR SELECT USING (true);
 
 CREATE POLICY "Allow public write on site_settings" ON site_settings FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow public write on salads" ON salads FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow public write on salad_plans" ON salad_plans FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public write on inquiries" ON inquiries FOR ALL USING (true) WITH CHECK (true);
