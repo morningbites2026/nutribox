@@ -13,16 +13,15 @@
  *    node scripts/migrate.js
  */
 
-const { createClient } = require('@supabase/supabase-js');
+import { createClient } from '@supabase/supabase-js';
 
 // ==========================================
 // CONFIGURATION: Enter your Supabase credentials
-// ==========================================
-const OLD_SUPABASE_URL = "YOUR_OLD_SUPABASE_URL_HERE";
-const OLD_SUPABASE_ANON_KEY = "YOUR_OLD_SUPABASE_ANON_KEY_HERE";
+const OLD_SUPABASE_URL = "https://qcqionggylawkssnwncv.supabase.co";
+const OLD_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjcWlvbmdneWxhd2tzc253bmN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NTQxNjcsImV4cCI6MjEwMzIzMDE2N30.VLjtIbf2mWa1AfAqhihWD-0YgoMQkBpI1ksfgJdUTws";
 
-const NEW_SUPABASE_URL = "YOUR_NEW_SUPABASE_URL_HERE";
-const NEW_SUPABASE_ANON_KEY = "YOUR_NEW_SUPABASE_ANON_KEY_HERE";
+const NEW_SUPABASE_URL = "https://qootbuuopygueiyxbwfm.supabase.co";
+const NEW_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvb3RidXVvcHlndWVpeXhid2ZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3ODgzODAsImV4cCI6MjA5MTM2NDM4MH0.TontN_KzMi-0_dy25FYjcO0TansxLdyrbcDZfhxD4Ks";
 
 // ==========================================
 // MIGRATION ENGINE
