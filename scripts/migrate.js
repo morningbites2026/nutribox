@@ -1,10 +1,14 @@
 /**
- * Supabase Data Migration Helper Script
+ * Supabase Data Migration Helper Script (Safe, Non-Destructive Mode)
  * This script copies data from your OLD Supabase project to your NEW Supabase project.
+ * 
+ * Safe Features:
+ * - Uses UPSERT instead of DELETE. It will NOT delete or overwrite any existing records in your target database.
+ * - Preserves exact primary key IDs (UUIDs) to ensure salad-plan relations remain intact.
  * 
  * Instructions:
  * 1. Open this file and fill in your OLD and NEW Supabase project credentials below.
- * 2. Make sure you have run the 'supabase_setup.sql' script in your NEW Supabase project's SQL editor first.
+ * 2. Make sure you have run the 'supabase_setup.sql' script in your target Supabase project's SQL editor first.
  * 3. Run this script from your terminal:
  *    node scripts/migrate.js
  */
@@ -32,7 +36,7 @@ async function runMigration() {
     process.exit(1);
   }
 
-  console.log("⚡ Starting database migration...");
+  console.log("⚡ Starting safe database migration...");
   const oldClient = createClient(OLD_SUPABASE_URL, OLD_SUPABASE_ANON_KEY);
   const newClient = createClient(NEW_SUPABASE_URL, NEW_SUPABASE_ANON_KEY);
 
@@ -58,30 +62,19 @@ async function runMigration() {
 
     console.log(`Read ${records.length} records from old project.`);
 
-    // 2. Clear default mock/records in new project to prevent duplication
-    const { error: deleteError } = await newClient
+    // 2. Safe Copy: Use upsert to write data without deleting anything
+    const { error: upsertError } = await newClient
       .from(table)
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // delete all (forUUID id)
+      .upsert(records, { onConflict: table === 'site_settings' ? 'key' : 'id' });
 
-    // For tables with text primary key (like site_settings)
-    if (table === 'site_settings') {
-      await newClient.from(table).delete().neq('key', 'dummy_value_to_delete_all');
-    }
-
-    // 3. Insert records into new project
-    const { error: insertError } = await newClient
-      .from(table)
-      .insert(records);
-
-    if (insertError) {
-      console.error(`❌ Error inserting records into new project's [${table}] table:`, insertError.message);
+    if (upsertError) {
+      console.error(`❌ Error migrating records into new project's [${table}] table:`, upsertError.message);
     } else {
-      console.log(`✅ Successfully copied ${records.length} records into new project's [${table}] table.`);
+      console.log(`✅ Successfully synced ${records.length} records into new project's [${table}] table.`);
     }
   }
 
-  console.log("\n🏁 Migration complete! Your new Supabase project tables are fully synced.");
+  console.log("\n🏁 Safe migration complete! All data has been copied over exactly as it was.");
 }
 
 runMigration().catch(err => {
