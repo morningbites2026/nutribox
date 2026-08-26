@@ -105,9 +105,7 @@ const WeeklySchedule = () => {
 
   const calculateCustomPrice = () => {
     if (selectedCount === 0) return 0;
-    const sum = selectedItems.reduce((acc, item) => acc + item.price, 0);
-    const average = sum / selectedCount;
-    return Math.round(average * 10); // Average price * 10 meals (rounded)
+    return selectedItems.reduce((acc, item) => acc + item.price, 0);
   };
 
   const calculatedPrice = calculateCustomPrice();
