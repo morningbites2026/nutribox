@@ -3,7 +3,7 @@ import { Check, Salad, Tag } from 'lucide-react';
 import { useContent } from '../context/ContentContext';
 
 const Plans = () => {
-  const { saladPlans, siteSettings, setActiveSubscribePlan } = useContent();
+  const { saladPlans, salads, siteSettings, setActiveSubscribePlan } = useContent();
   const [activeMenuTab, setActiveMenuTab] = useState('individual'); // 'individual' or 'combo'
 
   // Filter plans based on active tab, active status, and showcase selections

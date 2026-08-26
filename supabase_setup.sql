@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS salads (
 ALTER TABLE salads ADD COLUMN IF NOT EXISTS variant_support TEXT DEFAULT 'both';
 ALTER TABLE salads ADD COLUMN IF NOT EXISTS price_half NUMERIC DEFAULT 0;
 ALTER TABLE salads ADD COLUMN IF NOT EXISTS price_full NUMERIC DEFAULT 0;
+ALTER TABLE salad_plans ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT true;
 
 -- 4. Create salad_plans if not exist
 CREATE TABLE IF NOT EXISTS salad_plans (
@@ -38,6 +39,7 @@ CREATE TABLE IF NOT EXISTS salad_plans (
     meals_count INTEGER NOT NULL DEFAULT 10,
     salad_items TEXT[] DEFAULT '{}',
     image_url TEXT,
+    active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
 );
 
