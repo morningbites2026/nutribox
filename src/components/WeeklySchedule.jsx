@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useContent } from '../context/ContentContext';
 
 const WeeklySchedule = () => {
-  const { salads, siteSettings } = useContent();
+  const { salads, saladPlans, siteSettings } = useContent();
 
-  // State for custom meal selections: object mapping saladId to variant ('half', 'full', or null)
-  const [customSelections, setCustomSelections] = useState({});
+  // State for custom meal selections: array of selected Salad Plan IDs
+  const [selectedPlanIds, setSelectedPlanIds] = useState([]);
 
   const commitments = [
     {
@@ -71,44 +71,30 @@ const WeeklySchedule = () => {
     }
   ];
 
-  // Handle toggling of salad variant choice in Custom Builder
-  const handleToggleVariant = (saladId, variant) => {
-    setCustomSelections(prev => {
-      const current = prev[saladId];
-      if (current === variant) {
-        // Deselect if clicking the same choice
-        const copy = { ...prev };
-        delete copy[saladId];
-        return copy;
-      } else {
-        return {
-          ...prev,
-          [saladId]: variant
-        };
-      }
-    });
-  };
-
-  // Calculations for custom meal builder
-  const getSelectedItems = () => {
-    return Object.keys(customSelections).map(id => {
-      const salad = salads.find(s => s.id === id);
-      const variant = customSelections[id];
-      if (!salad || !variant) return null;
-      const price = variant === 'half' ? salad.price_half : salad.price_full;
-      return { salad, variant, price };
+  // Helper: resolve and format associated salad titles for any plan
+  const getAssociatedSaladsText = (plan) => {
+    if (!plan.salad_items || plan.salad_items.length === 0) return '';
+    const titles = plan.salad_items.map(item => {
+      const [saladId] = item.split(':');
+      const salad = salads.find(s => s.id === saladId);
+      return salad ? salad.title : '';
     }).filter(Boolean);
+    return titles.join(', ');
   };
 
-  const selectedItems = getSelectedItems();
-  const selectedCount = selectedItems.length;
-
-  const calculateCustomPrice = () => {
-    if (selectedCount === 0) return 0;
-    return selectedItems.reduce((acc, item) => acc + item.price, 0);
+  // Toggle selection state for a plan
+  const handleTogglePlan = (planId) => {
+    setSelectedPlanIds(prev => 
+      prev.includes(planId) 
+        ? prev.filter(id => id !== planId)
+        : [...prev, planId]
+    );
   };
 
-  const calculatedPrice = calculateCustomPrice();
+  // Selection calculations
+  const selectedPlans = saladPlans.filter(p => selectedPlanIds.includes(p.id));
+  const selectedCount = selectedPlans.length;
+  const calculatedPrice = selectedPlans.reduce((acc, p) => acc + p.price, 0);
 
   const handleOrderCustomPlan = () => {
     if (selectedCount === 0) return;
@@ -116,11 +102,11 @@ const WeeklySchedule = () => {
     const rawNum = siteSettings.social_whatsapp || '+91 94299 29822';
     const cleanNum = rawNum.replace(/[^\d]/g, '');
 
-    const saladsLines = selectedItems.map(
-      item => `• ${item.salad.title} (${item.variant === 'half' ? 'Half Pack' : 'Full Pack'} - ₹${item.price})`
+    const plansLines = selectedPlans.map(
+      p => `• ${p.title} (${p.plan_type === 'individual' ? 'Individual' : 'Combo'} - ₹${p.price})`
     ).join('\n');
 
-    const messageText = `Hello ${siteSettings.business_name || 'Nutribox'}!\n\nI would like to order a Custom 10-Meal Subscription Plan.\n\nIncluded Recipes:\n${saladsLines}\n\nFixed Portions: 10 Meals\nEstimated Price: *₹${calculatedPrice}*\n\nPlease confirm my custom delivery schedule!`;
+    const messageText = `Hello ${siteSettings.business_name || 'Nutribox'}!\n\nI would like to order a Custom Salad Plan combination.\n\nSelected Plans:\n${plansLines}\n\nTotal Price: *₹${calculatedPrice}*\n\nPlease confirm my custom delivery schedule!`;
     
     const encodedText = encodeURIComponent(messageText);
     const whatsappUrl = `https://wa.me/${cleanNum}?text=${encodedText}`;
@@ -239,7 +225,7 @@ const WeeklySchedule = () => {
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '40px' }} className="builder-layout">
             
-            {/* Left Column: Salad Checklist */}
+            {/* Left Column: Salad Plan Checklist */}
             <div>
               <span style={{
                 backgroundColor: 'var(--primary-light)',
@@ -266,19 +252,19 @@ const WeeklySchedule = () => {
               </h2>
               
               <p style={{ color: 'var(--text-muted)', fontSize: '15px', marginBottom: '32px', maxWidth: '640px' }}>
-                Build a customized 10-meal subscription combo. Select the recipes and portions you would like to include, and we will compute your tailored package pricing instantly.
+                Select and combine multiple pre-configured salad plans to build your custom subscription combo package. Live pricing updates instantly.
               </p>
 
-              {/* Salads list selection block */}
+              {/* Plans list selection block */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {salads.map(salad => {
-                  const supportsHalf = salad.variant_support === 'half' || salad.variant_support === 'both';
-                  const supportsFull = salad.variant_support === 'full' || salad.variant_support === 'both';
-                  const currentSelection = customSelections[salad.id];
+                {saladPlans.map(plan => {
+                  const isSelected = selectedPlanIds.includes(plan.id);
+                  const isCombo = plan.plan_type === 'combo';
+                  const associatedSalads = getAssociatedSaladsText(plan);
 
                   return (
                     <div 
-                      key={salad.id}
+                      key={plan.id}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -286,69 +272,61 @@ const WeeklySchedule = () => {
                         padding: '16px',
                         borderRadius: 'var(--radius-sm)',
                         border: '1px solid var(--border-color)',
-                        backgroundColor: currentSelection ? 'var(--primary-light)' : 'var(--bg-color)',
+                        backgroundColor: isSelected ? 'var(--primary-light)' : 'var(--bg-color)',
                         transition: 'var(--transition-smooth)'
                       }}
                       className="builder-salad-row"
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                         <img 
-                          src={salad.image_url} 
-                          alt={salad.title} 
+                          src={plan.image_url || 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600'} 
+                          alt={plan.title} 
                           style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-color)' }}
                         />
                         <div>
-                          <h4 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>
-                            {salad.title}
-                          </h4>
-                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                            {salad.tags?.slice(0, 2).join(', ')}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <h4 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>
+                              {plan.title}
+                            </h4>
+                            <span className="badge" style={{ 
+                              fontSize: '9px', 
+                              padding: '2px 8px', 
+                              backgroundColor: isCombo ? 'rgba(59, 130, 246, 0.1)' : 'var(--primary-light)',
+                              color: isCombo ? '#2563eb' : 'var(--primary)'
+                            }}>
+                              {isCombo ? 'Combo' : 'Individual'}
+                            </span>
+                          </div>
+                          
+                          {/* Conditional Description: If Combo, show ONLY associated salads list. Otherwise show default plan description */}
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginTop: '3px' }}>
+                            {isCombo 
+                              ? `Includes: ${associatedSalads || 'Salads loading...'}` 
+                              : plan.description}
                           </span>
                         </div>
                       </div>
 
-                      {/* Variant Selection Pills */}
-                      <div style={{ display: 'flex', gap: '10px' }}>
-                        {supportsHalf && (
-                          <button
-                            type="button"
-                            onClick={() => handleToggleVariant(salad.id, 'half')}
-                            style={{
-                              padding: '8px 16px',
-                              borderRadius: 'var(--radius-full)',
-                              border: '1px solid',
-                              borderColor: currentSelection === 'half' ? 'var(--primary)' : 'var(--border-color)',
-                              backgroundColor: currentSelection === 'half' ? 'var(--primary)' : 'var(--card-bg)',
-                              color: currentSelection === 'half' ? '#ffffff' : 'var(--text-muted)',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                              transition: 'var(--transition-smooth)'
-                            }}
-                          >
-                            Half Pack (₹{salad.price_half})
-                          </button>
-                        )}
-                        {supportsFull && (
-                          <button
-                            type="button"
-                            onClick={() => handleToggleVariant(salad.id, 'full')}
-                            style={{
-                              padding: '8px 16px',
-                              borderRadius: 'var(--radius-full)',
-                              border: '1px solid',
-                              borderColor: currentSelection === 'full' ? 'var(--primary)' : 'var(--border-color)',
-                              backgroundColor: currentSelection === 'full' ? 'var(--primary)' : 'var(--card-bg)',
-                              color: currentSelection === 'full' ? '#ffffff' : 'var(--text-muted)',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                              transition: 'var(--transition-smooth)'
-                            }}
-                          >
-                            Full Pack (₹{salad.price_full})
-                          </button>
-                        )}
+                      {/* Select / Add Button */}
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => handleTogglePlan(plan.id)}
+                          style={{
+                            padding: '8px 20px',
+                            borderRadius: 'var(--radius-full)',
+                            border: '1px solid',
+                            borderColor: isSelected ? 'var(--primary)' : 'var(--border-color)',
+                            backgroundColor: isSelected ? 'var(--primary)' : 'var(--card-bg)',
+                            color: isSelected ? '#ffffff' : 'var(--primary)',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            transition: 'var(--transition-smooth)'
+                          }}
+                        >
+                          {isSelected ? 'Selected' : `Add Plan (₹${plan.price})`}
+                        </button>
                       </div>
                     </div>
                   );
@@ -373,30 +351,25 @@ const WeeklySchedule = () => {
                   Custom Plan Summary
                 </h3>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-                  <span style={{ fontSize: '14px', color: 'var(--text-muted)', fontWeight: 500 }}>Total Meals</span>
-                  <span style={{ fontSize: '15px', color: 'var(--text-main)', fontWeight: 700 }}>10 Meals (Fixed)</span>
-                </div>
-
                 <div>
                   <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700, display: 'block', textTransform: 'uppercase', marginBottom: '8px' }}>
-                    Selected Salads ({selectedCount})
+                    Selected Salad Plans ({selectedCount})
                   </span>
                   
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '140px', overflowY: 'auto' }}>
-                    {selectedItems.map((item, idx) => (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto' }}>
+                    {selectedPlans.map((plan, idx) => (
                       <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                        <span style={{ color: 'var(--text-main)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '180px' }}>
-                          {item.salad.title}
+                        <span style={{ color: 'var(--text-main)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '180px', fontWeight: 600 }}>
+                          {plan.title}
                         </span>
-                        <span style={{ color: 'var(--primary)', fontWeight: 600 }}>
-                          {item.variant === 'half' ? 'Half' : 'Full'}
+                        <span style={{ color: 'var(--primary)', fontWeight: 700 }}>
+                          ₹{plan.price}
                         </span>
                       </div>
                     ))}
                     {selectedCount === 0 && (
                       <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-                        No items selected. Choose portion sizes on the left to start.
+                        No plans selected. Add plans on the left to start.
                       </span>
                     )}
                   </div>
@@ -410,7 +383,7 @@ const WeeklySchedule = () => {
                   textAlign: 'center'
                 }}>
                   <span style={{ fontSize: '13px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                    Estimated Combo Price
+                    Estimated Total Price
                   </span>
                   <span style={{ fontSize: '32px', fontWeight: 800, color: 'var(--primary)' }}>
                     ₹{calculatedPrice}
@@ -430,7 +403,7 @@ const WeeklySchedule = () => {
                     cursor: selectedCount === 0 ? 'not-allowed' : 'pointer'
                   }}
                 >
-                  Order Custom Combo
+                  Order Custom Plan
                 </button>
               </div>
             </div>
