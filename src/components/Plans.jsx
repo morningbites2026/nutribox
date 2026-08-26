@@ -3,11 +3,20 @@ import { Check, Salad, Tag } from 'lucide-react';
 import { useContent } from '../context/ContentContext';
 
 const Plans = () => {
-  const { saladPlans, salads, setActiveSubscribePlan } = useContent();
+  const { saladPlans, siteSettings, setActiveSubscribePlan } = useContent();
   const [activeMenuTab, setActiveMenuTab] = useState('individual'); // 'individual' or 'combo'
 
-  // Filter plans based on active tab and active status
-  const filteredPlans = saladPlans.filter(plan => plan.plan_type === activeMenuTab && plan.active !== false);
+  // Filter plans based on active tab, active status, and showcase selections
+  const getShowcasePlans = () => {
+    const showcaseStr = siteSettings.showcase_plans || '';
+    const showcaseIds = showcaseStr.split(',').map(id => id.trim()).filter(Boolean);
+    if (showcaseIds.length === 0) {
+      return saladPlans.filter(plan => plan.plan_type === activeMenuTab && plan.active !== false);
+    }
+    return saladPlans.filter(plan => showcaseIds.includes(plan.id) && plan.plan_type === activeMenuTab && plan.active !== false);
+  };
+
+  const filteredPlans = getShowcasePlans();
 
   return (
     <section id="plans" style={{

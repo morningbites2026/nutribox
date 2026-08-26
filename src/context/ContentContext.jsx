@@ -19,7 +19,8 @@ const defaultSettings = {
   footer_text: '© 2026 Nutribox. Fresh & Healthy Salad Subscriptions.',
   delivery_info: 'All orders are prepared fresh at 5:00 AM each morning and dispatched for delivery in temperature-controlled boxes.',
   calculator_whatsapp: '+91 94299 29822',
-  calculator_featured_plans: '' // Comma-separated plan IDs to filter display
+  calculator_featured_plans: '', // Comma-separated plan IDs to filter display
+  showcase_plans: '' // Comma-separated plan IDs to showcase on frontend
 };
 
 const defaultSalads = [

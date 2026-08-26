@@ -43,6 +43,7 @@ const AdminPanel = () => {
   // Salad Plan editor states
   const [editingPlanId, setEditingPlanId] = useState(null); // null = new, id = edit
   const [isPlanFormOpen, setIsPlanFormOpen] = useState(false);
+  const [selectedShowcasePlanId, setSelectedShowcasePlanId] = useState('');
   const [planForm, setPlanForm] = useState({
     title: '',
     description: '',
@@ -221,71 +222,31 @@ const AdminPanel = () => {
   // ==========================================
   // SALAD PLANS OPERATIONS
   // ==========================================
-  const openEditPlan = (plan) => {
-    setEditingPlanId(plan.id);
-    setPlanForm({
-      title: plan.title || '',
-      description: plan.description || '',
-      plan_type: plan.plan_type || 'combo',
-      price: plan.price || '',
-      meals_count: plan.meals_count ? plan.meals_count.toString() : '10',
-      image_url: plan.image_url || '',
-      salad_items: plan.salad_items || [],
-      active: plan.active !== false
-    });
-    setIsPlanFormOpen(true);
-  };
-
   const openNewPlan = () => {
-    setEditingPlanId(null);
-    setPlanForm({
-      title: '',
-      description: '',
-      plan_type: 'combo',
-      price: '',
-      meals_count: '10',
-      image_url: '',
-      salad_items: [],
-      active: true
-    });
+    setSelectedShowcasePlanId('');
     setIsPlanFormOpen(true);
   };
 
-  const handlePlanSubmit = async (e) => {
+  const handleAddShowcasePlan = async (e) => {
     e.preventDefault();
-    if (!planForm.title || !planForm.price) {
-      triggerAlert('Title and Price are required fields!', 'error');
+    if (!selectedShowcasePlanId) {
+      triggerAlert('Please select a plan to showcase!', 'error');
       return;
     }
-
-    if (planForm.salad_items.length === 0) {
-      triggerAlert('Please select at least one salad recipe variant!', 'error');
-      return;
-    }
-
-    const processedPlan = {
-      title: planForm.title,
-      description: planForm.description,
-      plan_type: planForm.plan_type,
-      price: parseFloat(planForm.price),
-      meals_count: parseInt(planForm.meals_count) || 10,
-      image_url: planForm.image_url || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=600',
-      salad_items: planForm.salad_items || [],
-      active: planForm.active !== false
-    };
-
-    try {
-      if (editingPlanId) {
-        await updateSaladPlan(editingPlanId, processedPlan);
-        triggerAlert('Salad Plan updated successfully!');
-      } else {
-        await addSaladPlan(processedPlan);
-        triggerAlert('New Salad Plan added successfully!');
+    const currentShowcase = siteSettings.showcase_plans || '';
+    const currentIds = currentShowcase.split(',').map(id => id.trim()).filter(Boolean);
+    if (!currentIds.includes(selectedShowcasePlanId)) {
+      currentIds.push(selectedShowcasePlanId);
+      try {
+        await updateMultipleSettings({ showcase_plans: currentIds.join(',') });
+        triggerAlert("Salad Plan added to showcase successfully!");
+      } catch (err) {
+        triggerAlert("Failed to update site settings.", "error");
       }
-      setIsPlanFormOpen(false);
-    } catch (err) {
-      triggerAlert('Failed to save salad plan. Please try again.', 'error');
+    } else {
+      triggerAlert("This plan is already showcased!", "info");
     }
+    setIsPlanFormOpen(false);
   };
 
   const handleDeletePlan = async (id, title) => {
@@ -848,269 +809,133 @@ const AdminPanel = () => {
                           <th>Price (₹)</th>
                           <th>Type</th>
                           <th>Associated Salads</th>
-                          <th style={{ textAlign: 'right' }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {saladPlans.map(plan => (
-                          <tr key={plan.id}>
-                            <td>
-                              <img 
-                                src={plan.image_url} 
-                                alt={plan.title} 
-                                style={{ width: '45px', height: '45px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border-color)' }}
-                              />
-                            </td>
-                            <td>
-                              <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{plan.title}</div>
-                              <div style={{ fontSize: '11px', color: 'var(--text-muted)', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '200px' }}>{plan.description}</div>
-                            </td>
-                            <td>
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  try {
-                                    await updateSaladPlan(plan.id, { active: !plan.active });
-                                    triggerAlert(`Plan status changed to ${!plan.active ? 'Active' : 'Inactive'}!`);
-                                  } catch (err) {
-                                    triggerAlert("Failed to update status.", "error");
-                                  }
-                                }}
-                                style={{
-                                  padding: '6px 12px',
-                                  borderRadius: 'var(--radius-full)',
-                                  border: 'none',
-                                  fontSize: '11px',
-                                  fontWeight: 700,
-                                  cursor: 'pointer',
-                                  backgroundColor: plan.active ? 'var(--primary-light)' : '#f3f4f6',
-                                  color: plan.active ? 'var(--primary)' : '#6b7280',
-                                  transition: 'all 0.2s ease',
-                                  display: 'inline-flex',
-                                  alignItems: 'center'
-                                }}
-                              >
-                                {plan.active ? 'Active' : 'Inactive'}
-                              </button>
-                            </td>
-                            <td style={{ fontWeight: 600 }}>{plan.meals_count} meals</td>
-                            <td style={{ fontWeight: 800 }}>₹{plan.price}</td>
-                            <td>
-                              <span className="badge" style={{ backgroundColor: plan.plan_type === 'individual' ? 'var(--primary-light)' : 'rgba(59, 130, 246, 0.1)', color: plan.plan_type === 'individual' ? 'var(--primary)' : '#2563eb' }}>
-                                {plan.plan_type === 'individual' ? 'Individual' : 'Combo'}
-                              </span>
-                            </td>
-                            <td style={{ fontSize: '13px', color: 'var(--text-muted)', maxWidth: '220px', whiteSpace: 'normal', wordBreak: 'break-word' }}>
-                              {(() => {
-                                if (!plan.salad_items || plan.salad_items.length === 0) return 'None';
-                                return plan.salad_items.map(item => {
-                                  const [saladId] = item.split(':');
-                                  const salad = salads.find(s => s.id === saladId);
-                                  return salad ? salad.title : null;
-                                }).filter(Boolean).join(', ') || 'None';
-                              })()}
-                            </td>
-                            <td style={{ textAlign: 'right' }}>
-                              <div style={{ display: 'inline-flex', gap: '8px' }}>
-                                <button 
-                                  onClick={() => openEditPlan(plan)}
-                                  style={actionBtnStyle}
-                                  title="Edit Plan"
+                        {(() => {
+                          const showcaseStr = siteSettings.showcase_plans || '';
+                          const showcaseIds = showcaseStr.split(',').map(id => id.trim()).filter(Boolean);
+                          const showcasedPlans = saladPlans.filter(p => showcaseIds.includes(p.id));
+
+                          return showcasedPlans.map(plan => (
+                            <tr key={plan.id}>
+                              <td>
+                                <img 
+                                  src={plan.image_url} 
+                                  alt={plan.title} 
+                                  style={{ width: '45px', height: '45px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border-color)' }}
+                                />
+                              </td>
+                              <td>
+                                <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{plan.title}</div>
+                                <div style={{ fontSize: '11px', color: 'var(--text-muted)', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '200px' }}>{plan.description}</div>
+                              </td>
+                              <td>
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    try {
+                                      await updateSaladPlan(plan.id, { active: !plan.active });
+                                      triggerAlert(`Plan status changed to ${!plan.active ? 'Active' : 'Inactive'}!`);
+                                    } catch (err) {
+                                      triggerAlert("Failed to update status.", "error");
+                                    }
+                                  }}
+                                  style={{
+                                    padding: '6px 12px',
+                                    borderRadius: 'var(--radius-full)',
+                                    border: 'none',
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    backgroundColor: plan.active ? 'var(--primary-light)' : '#f3f4f6',
+                                    color: plan.active ? 'var(--primary)' : '#6b7280',
+                                    transition: 'all 0.2s ease',
+                                    display: 'inline-flex',
+                                    alignItems: 'center'
+                                  }}
                                 >
-                                  <Edit2 size={14} />
+                                  {plan.active ? 'Active' : 'Inactive'}
                                 </button>
-                                <button 
-                                  onClick={() => handleDeletePlan(plan.id, plan.title)}
-                                  style={{ ...actionBtnStyle, color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.2)' }}
-                                  title="Delete Plan"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                        {saladPlans.length === 0 && (
-                          <tr>
-                            <td colSpan="8" style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
-                              No plans configured. Click "Add Salad Plan" to create one.
-                            </td>
-                          </tr>
-                        )}
+                              </td>
+                              <td style={{ fontWeight: 600 }}>{plan.meals_count} meals</td>
+                              <td style={{ fontWeight: 800 }}>₹{plan.price}</td>
+                              <td>
+                                <span className="badge" style={{ backgroundColor: plan.plan_type === 'individual' ? 'var(--primary-light)' : 'rgba(59, 130, 246, 0.1)', color: plan.plan_type === 'individual' ? 'var(--primary)' : '#2563eb' }}>
+                                  {plan.plan_type === 'individual' ? 'Individual' : 'Combo'}
+                                </span>
+                              </td>
+                              <td style={{ fontSize: '13px', color: 'var(--text-muted)', maxWidth: '250px', whiteSpace: 'normal', wordBreak: 'break-word' }}>
+                                {(() => {
+                                  if (!plan.salad_items || plan.salad_items.length === 0) return 'None';
+                                  return plan.salad_items.map(item => {
+                                    const [saladId] = item.split(':');
+                                    const salad = salads.find(s => s.id === saladId);
+                                    return salad ? salad.title : null;
+                                  }).filter(Boolean).join(', ') || 'None';
+                                })()}
+                              </td>
+                            </tr>
+                          ));
+                        })()}
+                        {(() => {
+                          const showcaseStr = siteSettings.showcase_plans || '';
+                          const showcaseIds = showcaseStr.split(',').map(id => id.trim()).filter(Boolean);
+                          if (saladPlans.filter(p => showcaseIds.includes(p.id)).length === 0) {
+                            return (
+                              <tr>
+                                <td colSpan="7" style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
+                                  No salad plans added to showcase. Click "Add Salad Plan" to select one.
+                                </td>
+                              </tr>
+                            );
+                          }
+                          return null;
+                        })()}
                       </tbody>
                     </table>
                   </div>
                 </>
               ) : (
-                // Add / Edit Form UI
-                <form onSubmit={handlePlanSubmit}>
-                  <h3 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '24px' }}>
-                    {editingPlanId ? 'Edit Salad Plan' : 'Create New Salad Plan'}
+                /* Showcase Selection Dropdown UI */
+                <form onSubmit={handleAddShowcasePlan}>
+                  <h3 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '12px' }}>
+                    Select Salad Plan to Showcase
                   </h3>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
-                    <div className="admin-input-group">
-                      <label className="admin-label">Salad Plan Title *</label>
-                      <input 
-                        type="text" 
-                        value={planForm.title}
-                        onChange={(e) => setPlanForm({...planForm, title: e.target.value})}
-                        placeholder="e.g. Lean & Clean Pack"
-                        className="admin-input"
-                        required
-                      />
-                    </div>
-                    <div className="admin-input-group">
-                      <label className="admin-label">Plan Category / Type *</label>
-                      <select 
-                        value={planForm.plan_type}
-                        onChange={(e) => {
-                          setPlanForm({
-                            ...planForm,
-                            plan_type: e.target.value,
-                            salad_items: []
-                          });
-                        }}
-                        className="admin-input"
-                        style={{ height: '45px' }}
-                      >
-                        <option value="combo">Combo Plan (Multiple Salads)</option>
-                        <option value="individual">Individual Salad Plan (Single Salad)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
-                    <div className="admin-input-group">
-                      <label className="admin-label">Image Photo URL</label>
-                      <input 
-                        type="text" 
-                        value={planForm.image_url}
-                        onChange={(e) => setPlanForm({...planForm, image_url: e.target.value})}
-                        placeholder="https://images.unsplash.com/..."
-                        className="admin-input"
-                      />
-                    </div>
-                    <div className="admin-input-group" style={{ display: 'flex', alignItems: 'center', marginTop: '24px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontWeight: 600, color: 'var(--text-main)' }}>
-                        <input 
-                          type="checkbox" 
-                          checked={planForm.active !== false}
-                          onChange={(e) => setPlanForm({...planForm, active: e.target.checked})}
-                          style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: 'var(--primary)' }}
-                        />
-                        Active / Visible on Front End
-                      </label>
-                    </div>
-                  </div>
+                  <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '24px' }}>
+                    Choose an active created package from the database to display in the homepage showcase grid.
+                  </p>
 
                   <div className="admin-input-group">
-                    <label className="admin-label">Plan Description</label>
-                    <textarea 
-                      value={planForm.description}
-                      onChange={(e) => setPlanForm({...planForm, description: e.target.value})}
-                      placeholder="Explain details, target subscription audience..."
-                      className="admin-textarea"
-                    />
-                  </div>
-
-                  {/* Multi-Select checklist of salads with Half / Full variant checkboxes */}
-                  <div className="admin-input-group" style={{ gridColumn: 'span 2' }}>
-                    <label className="admin-label" style={{ fontWeight: 600, display: 'block', marginBottom: '8px' }}>
-                      {planForm.plan_type === 'individual' 
-                        ? 'Select exactly one salad variant for this plan * (Selection is restricted to 1)' 
-                        : 'Select salads and variants to include in this combo *'}
-                    </label>
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '12px',
-                      border: '1px solid var(--border-color)',
-                      padding: '16px',
-                      borderRadius: 'var(--radius-sm)',
-                      backgroundColor: 'var(--bg-color)',
-                      maxHeight: '280px',
-                      overflowY: 'auto'
-                    }}>
-                      {salads.map(salad => {
-                        const supportsHalf = salad.variant_support === 'half' || salad.variant_support === 'both';
-                        const supportsFull = salad.variant_support === 'full' || salad.variant_support === 'both';
-
-                        const isHalfChecked = planForm.salad_items?.includes(`${salad.id}:half`);
-                        const isFullChecked = planForm.salad_items?.includes(`${salad.id}:full`);
-
-                        return (
-                          <div key={salad.id} style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '8px 12px',
-                            borderRadius: '4px',
-                            borderBottom: '1px solid var(--border-color)',
-                            backgroundColor: (isHalfChecked || isFullChecked) ? 'var(--primary-light)' : 'transparent',
-                            transition: 'var(--transition-smooth)'
-                          }} className="salad-select-row">
-                            <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>{salad.title}</span>
-                            
-                            <div style={{ display: 'flex', gap: '16px' }}>
-                              {supportsHalf && (
-                                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}>
-                                  <input 
-                                    type="checkbox"
-                                    checked={isHalfChecked}
-                                    onChange={() => handleSaladItemSelect(salad.id, 'half', isHalfChecked)}
-                                    style={{ accentColor: 'var(--primary)' }}
-                                  />
-                                  <span>Half Pack (₹{salad.price_half})</span>
-                                </label>
-                              )}
-                              {supportsFull && (
-                                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}>
-                                  <input 
-                                    type="checkbox"
-                                    checked={isFullChecked}
-                                    onChange={() => handleSaladItemSelect(salad.id, 'full', isFullChecked)}
-                                    style={{ accentColor: 'var(--primary)' }}
-                                  />
-                                  <span>Full Pack (₹{salad.price_full})</span>
-                                </label>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                      {salads.length === 0 && (
-                        <span style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center' }}>
-                          No salads available. Create salads first in the "Salads Recipes" tab.
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginTop: '20px' }}>
-                    <div className="admin-input-group">
-                      <label className="admin-label">Plan Price (₹) *</label>
-                      <input 
-                        type="number" 
-                        step="0.01"
-                        value={planForm.price}
-                        onChange={(e) => setPlanForm({...planForm, price: e.target.value})}
-                        placeholder="400"
-                        className="admin-input"
-                        required
-                      />
-                    </div>
-                    <div className="admin-input-group">
-                      <label className="admin-label">Meals Count (Quantity of meals provided) *</label>
-                      <input 
-                        type="number" 
-                        value={planForm.meals_count}
-                        onChange={(e) => setPlanForm({...planForm, meals_count: e.target.value})}
-                        placeholder="10"
-                        className="admin-input"
-                        required
-                      />
-                    </div>
+                    <label className="admin-label">Choose Package *</label>
+                    <select
+                      value={selectedShowcasePlanId}
+                      onChange={(e) => setSelectedShowcasePlanId(e.target.value)}
+                      className="admin-input"
+                      style={{ height: '45px' }}
+                      required
+                    >
+                      <option value="">-- Select an Active Package --</option>
+                      {(() => {
+                        const showcaseStr = siteSettings.showcase_plans || '';
+                        const showcaseIds = showcaseStr.split(',').map(id => id.trim()).filter(Boolean);
+                        
+                        // Filter plans that:
+                        // - Are active (active !== false)
+                        // - Are NOT customized packages (e.g. title does not contain 'custom')
+                        // - Are NOT already in the showcase list
+                        return saladPlans
+                          .filter(p => p.active !== false && 
+                                       !p.title.toLowerCase().includes('custom') && 
+                                       !p.description?.toLowerCase().includes('custom') &&
+                                       !showcaseIds.includes(p.id))
+                          .map(p => (
+                            <option key={p.id} value={p.id}>
+                              {p.title} ({p.plan_type === 'individual' ? 'Individual' : 'Combo'} - ₹{p.price})
+                            </option>
+                          ));
+                      })()}
+                    </select>
                   </div>
 
                   <div style={{ display: 'flex', gap: '16px', marginTop: '30px', borderTop: '1px solid var(--border-color)', paddingTop: '24px' }}>
@@ -1125,8 +950,8 @@ const AdminPanel = () => {
                       type="submit" 
                       className="btn btn-primary"
                     >
-                      <Save size={16} />
-                      Save Salad Plan
+                      <Plus size={16} />
+                      Add to Showcase
                     </button>
                   </div>
                 </form>
