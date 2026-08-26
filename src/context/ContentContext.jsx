@@ -105,10 +105,17 @@ const defaultPlans = [
 
 export const ContentProvider = ({ children }) => {
   const [siteSettings, setSiteSettings] = useState(defaultSettings);
-  const [salads, setSalads] = useState(defaultSalads);
-  const [saladPlans, setSaladPlans] = useState(defaultPlans);
+  const [salads, setSalads] = useState([]);
+  const [saladPlans, setSaladPlans] = useState([]);
   const [inquiries, setInquiries] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Loaded active salads from existing menu_item table
+  const [menuItemSalads, setMenuItemSalads] = useState([
+    { id: 'm1', title: 'Garden Greens Salad', description: 'Fresh organic greens', price_half: 100, price_full: 180, image_url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600' },
+    { id: 'm2', title: 'Protein Booster Salad', description: 'High protein booster pack', price_half: 150, price_full: 260, image_url: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=600' },
+    { id: 'm3', title: 'Keto Smoked Salmon', description: 'Sweet and savory smoked salmon', price_half: 180, price_full: 320, image_url: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600' }
+  ]);
   const [isDemoMode, setIsDemoMode] = useState(true);
   const [supabaseClient, setSupabaseClient] = useState(null);
 
@@ -164,7 +171,22 @@ export const ContentProvider = ({ children }) => {
           
           if (saladsError) throw saladsError;
           if (saladsData) {
-            setSalads(saladsData);
+            setSalads(saladsData.map(s => ({ ...s, active: s.active !== false })));
+          }
+
+          // Load salads from the main menu_item table if they exist
+          try {
+            const { data: menuData, error: menuError } = await supabaseClient
+              .from('menu_item')
+              .select('*')
+              .eq('type', 'Salad')
+              .eq('active', true);
+            
+            if (!menuError && menuData) {
+              setMenuItemSalads(menuData);
+            }
+          } catch (err) {
+            console.warn("Could not load from menu_item table (might not exist):", err);
           }
 
           // Load plans
@@ -214,7 +236,8 @@ export const ContentProvider = ({ children }) => {
     }
 
     if (savedSalads) {
-      setSalads(JSON.parse(savedSalads));
+      const parsedSalads = JSON.parse(savedSalads);
+      setSalads(parsedSalads.map(s => ({ ...s, active: s.active !== false })));
     } else {
       localStorage.setItem('nutribox_salads', JSON.stringify(defaultSalads));
     }
@@ -374,6 +397,42 @@ export const ContentProvider = ({ children }) => {
     }
   };
 
+  const addSaladFromMenuItem = async (menuItem) => {
+    const cleanSalad = {
+      id: menuItem.id,
+      title: menuItem.title || menuItem.name || 'Unnamed Salad',
+      description: menuItem.description || '',
+      variant_support: menuItem.variant_support || 'both',
+      price_half: parseFloat(menuItem.price_half) || parseFloat(menuItem.price) || 0,
+      price_full: parseFloat(menuItem.price_full) || parseFloat(menuItem.price) || 0,
+      image_url: menuItem.image_url || 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600',
+      ingredients: menuItem.ingredients || [],
+      tags: menuItem.tags || [],
+      active: true
+    };
+
+    setSalads(prev => {
+      const exists = prev.some(s => s.id === cleanSalad.id);
+      if (exists) return prev;
+      const updated = [...prev, cleanSalad];
+      if (isDemoMode) {
+        localStorage.setItem('nutribox_salads', JSON.stringify(updated));
+      }
+      return updated;
+    });
+
+    if (supabaseClient && !isDemoMode) {
+      const { error } = await supabaseClient
+        .from('salads')
+        .upsert([cleanSalad]);
+
+      if (error) {
+        console.error("Failed to upsert salad from menu_item:", error);
+        throw error;
+      }
+    }
+  };
+
   const updateSalad = async (id, updatedSalad) => {
     setSalads(prev => {
       const updated = prev.map(s => s.id === id ? { ...s, ...updatedSalad } : s);
@@ -384,18 +443,20 @@ export const ContentProvider = ({ children }) => {
     });
 
     if (supabaseClient && !isDemoMode) {
+      const updatePayload = {};
+      if (updatedSalad.title !== undefined) updatePayload.title = updatedSalad.title;
+      if (updatedSalad.description !== undefined) updatePayload.description = updatedSalad.description;
+      if (updatedSalad.variant_support !== undefined) updatePayload.variant_support = updatedSalad.variant_support;
+      if (updatedSalad.price_half !== undefined) updatePayload.price_half = parseFloat(updatedSalad.price_half) || 0;
+      if (updatedSalad.price_full !== undefined) updatePayload.price_full = parseFloat(updatedSalad.price_full) || 0;
+      if (updatedSalad.ingredients !== undefined) updatePayload.ingredients = updatedSalad.ingredients;
+      if (updatedSalad.tags !== undefined) updatePayload.tags = updatedSalad.tags;
+      if (updatedSalad.image_url !== undefined) updatePayload.image_url = updatedSalad.image_url;
+      if (updatedSalad.active !== undefined) updatePayload.active = updatedSalad.active;
+
       const { error } = await supabaseClient
         .from('salads')
-        .update({
-          title: updatedSalad.title,
-          description: updatedSalad.description,
-          variant_support: updatedSalad.variant_support,
-          price_half: parseFloat(updatedSalad.price_half) || 0,
-          price_full: parseFloat(updatedSalad.price_full) || 0,
-          ingredients: updatedSalad.ingredients,
-          tags: updatedSalad.tags,
-          image_url: updatedSalad.image_url
-        })
+        .update(updatePayload)
         .eq('id', id);
 
       if (error) {
@@ -555,7 +616,9 @@ export const ContentProvider = ({ children }) => {
       deleteSalad,
       addSaladPlan,
       updateSaladPlan,
-      deleteSaladPlan
+      deleteSaladPlan,
+      menuItemSalads,
+      addSaladFromMenuItem
     }}>
       {children}
     </ContentContext.Provider>
