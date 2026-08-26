@@ -174,10 +174,10 @@ export const ContentProvider = ({ children }) => {
             setSalads(saladsData.map(s => ({ ...s, active: s.active !== false })));
           }
 
-          // Load salads from the main menu_item table if they exist
+          // Load salads from the main menu_items table if they exist
           try {
             const { data: menuData, error: menuError } = await supabaseClient
-              .from('menu_item')
+              .from('menu_items')
               .select('*')
               .eq('type', 'Salad')
               .eq('active', true);
@@ -186,7 +186,7 @@ export const ContentProvider = ({ children }) => {
               setMenuItemSalads(menuData);
             }
           } catch (err) {
-            console.warn("Could not load from menu_item table (might not exist):", err);
+            console.warn("Could not load from menu_items table (might not exist):", err);
           }
 
           // Load plans
