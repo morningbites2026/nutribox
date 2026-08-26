@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { X, Send, PhoneCall } from 'lucide-react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
-import WeeklySchedule from './components/WeeklySchedule';
+import WeeklySchedule, { MealCalculator } from './components/WeeklySchedule';
 import Plans from './components/Plans';
 import Footer from './components/Footer';
 import AdminPanel from './components/AdminPanel';
@@ -71,6 +71,7 @@ function LandingPage() {
       <Hero />
       <WeeklySchedule />
       <Plans />
+      <MealCalculator />
       <Footer />
 
       {/* GLOBAL MODAL 1: Subscribe / Inquiry Modal */}
