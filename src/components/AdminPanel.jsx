@@ -839,10 +839,11 @@ const AdminPanel = () => {
                         <tr>
                           <th>Photo</th>
                           <th>Salad Plan Title</th>
-                          <th>Plan Type</th>
+                          <th>Status</th>
+                          <th>Meals</th>
                           <th>Price (₹)</th>
-                          <th>Meals Quantity</th>
-                          <th>Salads Associated</th>
+                          <th>Type</th>
+                          <th>Associated Salads</th>
                           <th style={{ textAlign: 'right' }}>Actions</th>
                         </tr>
                       </thead>
@@ -858,19 +859,52 @@ const AdminPanel = () => {
                             </td>
                             <td>
                               <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{plan.title}</div>
-                              <div style={{ fontSize: '11px', color: 'var(--text-muted)', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '250px' }}>{plan.description}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: '200px' }}>{plan.description}</div>
                             </td>
+                            <td>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  try {
+                                    await updateSaladPlan(plan.id, { active: !plan.active });
+                                    triggerAlert(`Plan status changed to ${!plan.active ? 'Active' : 'Inactive'}!`);
+                                  } catch (err) {
+                                    triggerAlert("Failed to update status.", "error");
+                                  }
+                                }}
+                                style={{
+                                  padding: '6px 12px',
+                                  borderRadius: 'var(--radius-full)',
+                                  border: 'none',
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  backgroundColor: plan.active ? 'var(--primary-light)' : '#f3f4f6',
+                                  color: plan.active ? 'var(--primary)' : '#6b7280',
+                                  transition: 'all 0.2s ease',
+                                  display: 'inline-flex',
+                                  alignItems: 'center'
+                                }}
+                              >
+                                {plan.active ? 'Active' : 'Inactive'}
+                              </button>
+                            </td>
+                            <td style={{ fontWeight: 600 }}>{plan.meals_count} meals</td>
+                            <td style={{ fontWeight: 800 }}>₹{plan.price}</td>
                             <td>
                               <span className="badge" style={{ backgroundColor: plan.plan_type === 'individual' ? 'var(--primary-light)' : 'rgba(59, 130, 246, 0.1)', color: plan.plan_type === 'individual' ? 'var(--primary)' : '#2563eb' }}>
                                 {plan.plan_type === 'individual' ? 'Individual' : 'Combo'}
                               </span>
                             </td>
-                            <td style={{ fontWeight: 800 }}>₹{plan.price}</td>
-                            <td style={{ fontWeight: 600 }}>{plan.meals_count} meals</td>
-                            <td>
-                              <span className="badge" style={{ backgroundColor: 'var(--bg-color)', color: 'var(--text-main)', border: '1px solid var(--border-color)' }}>
-                                {plan.salad_items ? plan.salad_items.length : 0} Items
-                              </span>
+                            <td style={{ fontSize: '13px', color: 'var(--text-muted)', maxWidth: '220px', whiteSpace: 'normal', wordBreak: 'break-word' }}>
+                              {(() => {
+                                if (!plan.salad_items || plan.salad_items.length === 0) return 'None';
+                                return plan.salad_items.map(item => {
+                                  const [saladId] = item.split(':');
+                                  const salad = salads.find(s => s.id === saladId);
+                                  return salad ? salad.title : null;
+                                }).filter(Boolean).join(', ') || 'None';
+                              })()}
                             </td>
                             <td style={{ textAlign: 'right' }}>
                               <div style={{ display: 'inline-flex', gap: '8px' }}>
@@ -894,7 +928,7 @@ const AdminPanel = () => {
                         ))}
                         {saladPlans.length === 0 && (
                           <tr>
-                            <td colSpan="7" style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
+                            <td colSpan="8" style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
                               No plans configured. Click "Add Salad Plan" to create one.
                             </td>
                           </tr>

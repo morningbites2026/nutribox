@@ -26,10 +26,11 @@ export const MealCalculator = () => {
 
   // Filter plans based on admin-defined calculator setups
   const getFilteredPlans = () => {
+    const activePlans = saladPlans.filter(p => p.active !== false);
     const featuredStr = siteSettings.calculator_featured_plans || '';
     const featuredIds = featuredStr.split(',').map(id => id.trim()).filter(Boolean);
-    if (featuredIds.length === 0) return saladPlans;
-    return saladPlans.filter(p => featuredIds.includes(p.id));
+    if (featuredIds.length === 0) return activePlans;
+    return activePlans.filter(p => featuredIds.includes(p.id));
   };
 
   const filteredPlans = getFilteredPlans();

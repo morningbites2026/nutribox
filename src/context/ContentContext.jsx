@@ -174,7 +174,7 @@ export const ContentProvider = ({ children }) => {
           
           if (plansError) throw plansError;
           if (plansData) {
-            setSaladPlans(plansData);
+            setSaladPlans(plansData.map(p => ({ ...p, active: p.active !== false })));
           }
 
           // Load inquiries
@@ -219,7 +219,8 @@ export const ContentProvider = ({ children }) => {
     }
 
     if (savedPlans) {
-      setSaladPlans(JSON.parse(savedPlans));
+      const parsedPlans = JSON.parse(savedPlans);
+      setSaladPlans(parsedPlans.map(p => ({ ...p, active: p.active !== false })));
     } else {
       localStorage.setItem('nutribox_plans', JSON.stringify(defaultPlans));
     }
@@ -441,9 +442,10 @@ export const ContentProvider = ({ children }) => {
   // ==========================================
 
   const addSaladPlan = async (newPlan) => {
+    const planToSave = { ...newPlan, active: newPlan.active !== false };
     if (isDemoMode) {
       const id = Date.now().toString();
-      const planWithId = { ...newPlan, id };
+      const planWithId = { ...planToSave, id };
       setSaladPlans(prev => {
         const updated = [...prev, planWithId];
         localStorage.setItem('nutribox_plans', JSON.stringify(updated));
@@ -460,7 +462,8 @@ export const ContentProvider = ({ children }) => {
           price: parseFloat(newPlan.price) || 0,
           meals_count: parseInt(newPlan.meals_count) || 10,
           salad_items: newPlan.salad_items || [],
-          image_url: newPlan.image_url
+          image_url: newPlan.image_url,
+          active: newPlan.active !== false
         }])
         .select();
 
@@ -470,7 +473,7 @@ export const ContentProvider = ({ children }) => {
       }
       
       if (data && data[0]) {
-        setSaladPlans(prev => [...prev, data[0]]);
+        setSaladPlans(prev => [...prev, { ...data[0], active: data[0].active !== false }]);
         return data[0];
       }
     }
@@ -486,17 +489,19 @@ export const ContentProvider = ({ children }) => {
     });
 
     if (supabaseClient && !isDemoMode) {
+      const updatePayload = {};
+      if (updatedPlan.title !== undefined) updatePayload.title = updatedPlan.title;
+      if (updatedPlan.description !== undefined) updatePayload.description = updatedPlan.description;
+      if (updatedPlan.plan_type !== undefined) updatePayload.plan_type = updatedPlan.plan_type;
+      if (updatedPlan.price !== undefined) updatePayload.price = parseFloat(updatedPlan.price) || 0;
+      if (updatedPlan.meals_count !== undefined) updatePayload.meals_count = parseInt(updatedPlan.meals_count) || 10;
+      if (updatedPlan.salad_items !== undefined) updatePayload.salad_items = updatedPlan.salad_items;
+      if (updatedPlan.image_url !== undefined) updatePayload.image_url = updatedPlan.image_url;
+      if (updatedPlan.active !== undefined) updatePayload.active = updatedPlan.active;
+
       const { error } = await supabaseClient
         .from('salad_plans')
-        .update({
-          title: updatedPlan.title,
-          description: updatedPlan.description,
-          plan_type: updatedPlan.plan_type,
-          price: parseFloat(updatedPlan.price) || 0,
-          meals_count: parseInt(updatedPlan.meals_count) || 10,
-          salad_items: updatedPlan.salad_items || [],
-          image_url: updatedPlan.image_url
-        })
+        .update(updatePayload)
         .eq('id', id);
 
       if (error) {

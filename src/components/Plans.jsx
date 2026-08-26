@@ -6,8 +6,8 @@ const Plans = () => {
   const { saladPlans, salads, setActiveSubscribePlan } = useContent();
   const [activeMenuTab, setActiveMenuTab] = useState('individual'); // 'individual' or 'combo'
 
-  // Filter plans based on active tab
-  const filteredPlans = saladPlans.filter(plan => plan.plan_type === activeMenuTab);
+  // Filter plans based on active tab and active status
+  const filteredPlans = saladPlans.filter(plan => plan.plan_type === activeMenuTab && plan.active !== false);
 
   return (
     <section id="plans" style={{
