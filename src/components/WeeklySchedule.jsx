@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useContent } from '../context/ContentContext';
+import { useContent, isRecipeActive } from '../context/ContentContext';
 
 export const MealCalculator = () => {
   const { salads, saladPlans, siteSettings, recordInquiry } = useContent();
@@ -16,12 +16,28 @@ export const MealCalculator = () => {
   // Helper: resolve and format associated salad titles for any plan
   const getAssociatedSaladsText = (plan) => {
     if (!plan.salad_items || plan.salad_items.length === 0) return '';
-    const titles = plan.salad_items.map(item => {
-      const [saladId] = item.split(':');
-      const salad = salads.find(s => s.id === saladId);
-      return salad ? salad.title : '';
-    }).filter(Boolean);
-    return titles.join(', ');
+    return plan.salad_items
+      .filter(item => isRecipeActive(item, salads))
+      .map(item => {
+        const exact = salads.find(s => s.id === item);
+        if (exact) return exact.title;
+        
+        const [saladId, variant] = item.split(':');
+        if (variant) {
+          const variantMatch = salads.find(s => {
+            const sid = s.id.toLowerCase();
+            const searchId = saladId.toLowerCase();
+            const searchVar = variant.toLowerCase();
+            return sid.startsWith(searchId) && sid.includes(searchVar);
+          });
+          if (variantMatch) return variantMatch.title;
+        }
+
+        const baseMatch = salads.find(s => s.id === saladId);
+        return baseMatch ? baseMatch.title : null;
+      })
+      .filter(Boolean)
+      .join(', ');
   };
 
   // Filter plans based on active status and showcase selection

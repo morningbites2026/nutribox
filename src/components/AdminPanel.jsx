@@ -38,7 +38,8 @@ const AdminPanel = () => {
     price_full: '',
     image_url: '',
     ingredients_raw: '',
-    tags_raw: ''
+    tags_raw: '',
+    active: true
   });
 
   // Salad Plan editor states
@@ -149,7 +150,32 @@ const AdminPanel = () => {
   // ==========================================
   const openNewSalad = () => {
     setSelectedMenuItemId('');
+    setSaladForm({
+      title: '',
+      description: '',
+      variant_support: 'both',
+      price_half: '',
+      price_full: '',
+      image_url: '',
+      ingredients_raw: '',
+      tags_raw: '',
+      active: true
+    });
     setIsSaladFormOpen(true);
+  };
+
+  const handleDropdownChange = (itemId) => {
+    setSelectedMenuItemId(itemId);
+    const item = menuItemSalads.find(m => m.id.toString() === itemId.toString());
+    if (item) {
+      setSaladForm({
+        ...saladForm,
+        image_url: item.image_url || item.image || '',
+        ingredients_raw: Array.isArray(item.ingredients) ? item.ingredients.join(', ') : (item.ingredients || ''),
+        tags_raw: Array.isArray(item.tags) ? item.tags.join(', ') : (item.tags || ''),
+        active: true
+      });
+    }
   };
 
   const handleAddSaladFromMenu = async (e) => {
@@ -158,10 +184,15 @@ const AdminPanel = () => {
       triggerAlert('Please select a salad recipe to add!', 'error');
       return;
     }
-    const chosenItem = menuItemSalads.find(m => m.id === selectedMenuItemId);
+    const chosenItem = menuItemSalads.find(m => m.id.toString() === selectedMenuItemId.toString());
     if (chosenItem) {
       try {
-        await addSaladFromMenuItem(chosenItem);
+        await addSaladFromMenuItem(chosenItem, {
+          ingredients_raw: saladForm.ingredients_raw,
+          tags_raw: saladForm.tags_raw,
+          image_url: saladForm.image_url,
+          active: saladForm.active !== false
+        });
         triggerAlert('Salad recipe added successfully!');
       } catch (err) {
         triggerAlert('Failed to add salad recipe.', 'error');
@@ -630,30 +661,115 @@ const AdminPanel = () => {
                     <label className="admin-label">Choose Recipe *</label>
                     <select
                       value={selectedMenuItemId}
-                      onChange={(e) => setSelectedMenuItemId(e.target.value)}
+                      onChange={(e) => handleDropdownChange(e.target.value)}
                       className="admin-input"
                       style={{ height: '45px' }}
                       required
                     >
                       <option value="">-- Select an Active Salad --</option>
                       {(() => {
-                        const addedIds = salads.map(s => s.id.toString());
-                        
-                        const formatVariants = (options) => {
-                          if (!Array.isArray(options) || options.length === 0) return '';
-                          return ' (' + options.map(o => `${o.name || o.label || 'Price'}: ₹${o.price}`).join(', ') + ')';
-                        };
-
+                        const addedIds = salads.map(s => s.id.split('_')[0]); // match main item ID
                         return menuItemSalads
                           .filter(item => !addedIds.includes(item.id.toString()))
                           .map(item => (
                             <option key={item.id} value={item.id}>
-                              {item.name || item.title || 'Unnamed Salad'}{formatVariants(item.options)}
+                              {item.name || item.title || 'Unnamed Salad'}
                             </option>
                           ));
                       })()}
                     </select>
                   </div>
+
+                  {selectedMenuItemId && (() => {
+                    const chosenItem = menuItemSalads.find(m => m.id.toString() === selectedMenuItemId.toString());
+                    if (!chosenItem) return null;
+                    return (
+                      <>
+                        {/* Variants List Display */}
+                        <div style={{
+                          marginBottom: '24px',
+                          padding: '16px 20px',
+                          backgroundColor: 'var(--primary-light)',
+                          borderRadius: 'var(--radius-sm)',
+                          borderLeft: '4px solid var(--primary)'
+                        }}>
+                          <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--primary-dark)', marginBottom: '8px' }}>
+                            Detected Variants:
+                          </h4>
+                          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                            {chosenItem.options?.map((opt, idx) => (
+                              <div key={idx} style={{
+                                backgroundColor: 'var(--card-bg)',
+                                padding: '8px 16px',
+                                borderRadius: '4px',
+                                border: '1px solid var(--border-color)',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                color: 'var(--text-main)'
+                              }}>
+                                {opt.name || opt.label || 'Regular'}: <span style={{ color: 'var(--primary)', fontWeight: 700 }}>₹{opt.price}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Editable Fields */}
+                        <div className="admin-input-group">
+                          <label className="admin-label">Ingredients (Comma-separated list)</label>
+                          <input 
+                            type="text" 
+                            value={saladForm.ingredients_raw}
+                            onChange={(e) => setSaladForm({...saladForm, ingredients_raw: e.target.value})}
+                            placeholder="Baby Spinach, Cucumber, Tomatoes, Avocado, Feta"
+                            className="admin-input"
+                          />
+                        </div>
+
+                        <div className="admin-input-group">
+                          <label className="admin-label">Tags (Comma-separated list)</label>
+                          <input 
+                            type="text" 
+                            value={saladForm.tags_raw}
+                            onChange={(e) => setSaladForm({...saladForm, tags_raw: e.target.value})}
+                            placeholder="Keto, Vegan, High Protein"
+                            className="admin-input"
+                          />
+                        </div>
+
+                        <div className="admin-input-group">
+                          <label className="admin-label">Image URL</label>
+                          <input 
+                            type="text" 
+                            value={saladForm.image_url}
+                            onChange={(e) => setSaladForm({...saladForm, image_url: e.target.value})}
+                            placeholder="https://images.unsplash.com/..."
+                            className="admin-input"
+                          />
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '20px', marginBottom: '10px' }}>
+                          <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>Default Status:</span>
+                          <button
+                            type="button"
+                            onClick={() => setSaladForm({...saladForm, active: saladForm.active !== false ? false : true})}
+                            style={{
+                              padding: '6px 16px',
+                              borderRadius: 'var(--radius-full)',
+                              border: 'none',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              backgroundColor: (saladForm.active !== false) ? 'var(--primary-light)' : '#f3f4f6',
+                              color: (saladForm.active !== false) ? 'var(--primary)' : '#6b7280',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            {(saladForm.active !== false) ? 'Active' : 'Inactive'}
+                          </button>
+                        </div>
+                      </>
+                    );
+                  })()}
 
                   <div style={{ display: 'flex', gap: '16px', marginTop: '30px', borderTop: '1px solid var(--border-color)', paddingTop: '24px' }}>
                     <button 

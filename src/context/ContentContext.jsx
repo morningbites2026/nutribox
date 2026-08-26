@@ -3,6 +3,32 @@ import { createClient } from '@supabase/supabase-js';
 
 const ContentContext = createContext();
 
+export const isRecipeActive = (saladItemId, salads) => {
+  if (!saladItemId || !Array.isArray(salads)) return true;
+  const [saladId, variant] = saladItemId.split(':');
+  
+  // Look for exact match
+  const exact = salads.find(s => s.id === saladItemId);
+  if (exact) return exact.active !== false;
+
+  // Look for variant row
+  if (variant) {
+    const variantMatch = salads.find(s => {
+      const sid = s.id.toLowerCase();
+      const searchId = saladId.toLowerCase();
+      const searchVar = variant.toLowerCase();
+      return sid.startsWith(searchId) && sid.includes(searchVar);
+    });
+    if (variantMatch) return variantMatch.active !== false;
+  }
+
+  // Fallback to base match
+  const baseMatch = salads.find(s => s.id === saladId);
+  if (baseMatch) return baseMatch.active !== false;
+
+  return true;
+};
+
 // Mock Initial Data for LocalStorage fallback
 const defaultSettings = {
   business_name: 'Nutribox',
@@ -397,53 +423,32 @@ export const ContentProvider = ({ children }) => {
     }
   };
 
-  const addSaladFromMenuItem = async (menuItem) => {
-    let price_half = 0;
-    let price_full = 0;
-    let variant_support = 'both';
+  const addSaladFromMenuItem = async (menuItem, customFields) => {
+    const variants = Array.isArray(menuItem.options) ? menuItem.options : [];
+    
+    // Map each variant of the selected salad as a separate row
+    const cleanSalads = variants.map(opt => {
+      const variantName = opt.name || opt.label || 'Regular';
+      const variantId = `${menuItem.id}_${variantName}`;
 
-    if (Array.isArray(menuItem.options)) {
-      if (menuItem.options.length === 1) {
-        const opt = menuItem.options[0];
-        const nameLower = (opt.name || opt.label || '').toLowerCase();
-        if (nameLower.includes('half')) {
-          price_half = opt.price || 0;
-          variant_support = 'half';
-        } else {
-          price_full = opt.price || 0;
-          variant_support = 'full';
-        }
-      } else if (menuItem.options.length >= 2) {
-        const halfOpt = menuItem.options.find(o => (o.name || o.label || '').toLowerCase().includes('half'));
-        const fullOpt = menuItem.options.find(o => (o.name || o.label || '').toLowerCase().includes('full'));
-        
-        if (halfOpt) price_half = halfOpt.price || 0;
-        if (fullOpt) price_full = fullOpt.price || 0;
-
-        if (!halfOpt && menuItem.options[0]) price_half = menuItem.options[0].price || 0;
-        if (!fullOpt && menuItem.options[1]) price_full = menuItem.options[1].price || 0;
-        
-        variant_support = 'both';
-      }
-    }
-
-    const cleanSalad = {
-      id: menuItem.id.toString(),
-      title: menuItem.name || menuItem.title || 'Unnamed Salad',
-      description: menuItem.description || '',
-      variant_support,
-      price_half,
-      price_full,
-      image_url: menuItem.image_url || 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600',
-      ingredients: menuItem.ingredients || [],
-      tags: menuItem.tags || [],
-      active: true
-    };
+      return {
+        id: variantId,
+        title: `${menuItem.name || menuItem.title || 'Unnamed Salad'} (${variantName})`,
+        description: menuItem.description || '',
+        variant_support: 'both',
+        price_half: opt.price || 0,
+        price_full: opt.price || 0,
+        image_url: customFields.image_url || menuItem.image_url || 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=600',
+        ingredients: customFields.ingredients_raw ? customFields.ingredients_raw.split(',').map(i => i.trim()).filter(Boolean) : [],
+        tags: customFields.tags_raw ? customFields.tags_raw.split(',').map(t => t.trim()).filter(Boolean) : [],
+        active: customFields.active !== false
+      };
+    });
 
     setSalads(prev => {
-      const exists = prev.some(s => s.id === cleanSalad.id);
-      if (exists) return prev;
-      const updated = [...prev, cleanSalad];
+      const newIds = cleanSalads.map(s => s.id);
+      const filtered = prev.filter(s => !newIds.includes(s.id));
+      const updated = [...filtered, ...cleanSalads];
       if (isDemoMode) {
         localStorage.setItem('nutribox_salads', JSON.stringify(updated));
       }
@@ -453,10 +458,10 @@ export const ContentProvider = ({ children }) => {
     if (supabaseClient && !isDemoMode) {
       const { error } = await supabaseClient
         .from('salads')
-        .upsert([cleanSalad]);
+        .upsert(cleanSalads);
 
       if (error) {
-        console.error("Failed to upsert salad from menu_items:", error);
+        console.error("Failed to upsert variant salads:", error);
         throw error;
       }
     }

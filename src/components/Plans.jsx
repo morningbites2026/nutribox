@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Check, Salad, Tag } from 'lucide-react';
-import { useContent } from '../context/ContentContext';
+import { useContent, isRecipeActive } from '../context/ContentContext';
 
 const Plans = () => {
   const { saladPlans, salads, siteSettings, setActiveSubscribePlan } = useContent();
@@ -21,76 +21,88 @@ const Plans = () => {
   return (
     <section id="plans" style={{
       padding: '100px 0',
-      backgroundColor: 'var(--primary-light)',
+      backgroundColor: 'var(--bg-color)',
+      fontFamily: 'var(--font-sans)',
       transition: 'var(--transition-smooth)'
     }}>
-      <div className="container">
-        {/* Section Header */}
-        <div style={{
-          textAlign: 'center',
-          maxWidth: '650px',
-          margin: '0 auto 60px auto'
-        }}>
+      <div className="container" style={{ textAlign: 'center' }}>
+        
+        {/* Header Title */}
+        <div style={{ maxWidth: '640px', margin: '0 auto 48px auto' }}>
+          <span style={{
+            backgroundColor: 'var(--primary-light)',
+            color: 'var(--primary)',
+            padding: '6px 14px',
+            borderRadius: 'var(--radius-full)',
+            fontSize: '12px',
+            fontWeight: 700,
+            letterSpacing: '1px',
+            textTransform: 'uppercase'
+          }}>
+            Choose Your Plan
+          </span>
           <h2 className="font-serif" style={{
-            fontSize: '40px',
+            fontSize: '38px',
             color: 'var(--primary-dark)',
+            fontWeight: 700,
+            marginTop: '16px',
             marginBottom: '16px',
-            fontWeight: 700
+            lineHeight: 1.2
           }}>
-            Choose Your Salad Plan
+            Salad Subscriptions Packages
           </h2>
-          <p style={{
-            color: 'var(--text-muted)',
-            fontSize: '16px'
-          }}>
-            Explore our curated meal packages. Select an Individual Salad Plan containing your favorite single recipe, or choose a Combo Plan to combine flavors.
+          <p style={{ color: 'var(--text-muted)', fontSize: '15px', lineHeight: 1.6 }}>
+            Select from our chef-curated individual or combo health-focused packages. Skip, pause, or customize delivery slots at your convenience.
           </p>
+        </div>
 
-          {/* Individual vs Combo Toggle Tabs */}
+        {/* Tab Controls */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          marginBottom: '50px'
+        }}>
           <div style={{
             display: 'inline-flex',
-            alignItems: 'center',
-            backgroundColor: 'var(--card-bg)',
-            padding: '4px',
-            borderRadius: 'var(--radius-full)',
-            border: '1px solid var(--border-color)',
-            marginTop: '32px'
+            backgroundColor: 'var(--primary-light)',
+            padding: '6px',
+            borderRadius: 'var(--radius-full)'
           }}>
             <button
               onClick={() => setActiveMenuTab('individual')}
+              className={`btn ${activeMenuTab === 'individual' ? 'btn-primary' : 'btn-secondary'}`}
               style={{
-                padding: '12px 28px',
                 borderRadius: 'var(--radius-full)',
+                padding: '10px 24px',
+                fontSize: '14px',
+                fontWeight: 700,
                 border: 'none',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: '15px',
-                transition: 'var(--transition-smooth)',
-                backgroundColor: activeMenuTab === 'individual' ? 'var(--primary)' : 'transparent',
-                color: activeMenuTab === 'individual' ? '#ffffff' : 'var(--text-muted)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '8px',
+                backgroundColor: activeMenuTab === 'individual' ? 'var(--primary)' : 'transparent',
+                color: activeMenuTab === 'individual' ? '#ffffff' : 'var(--primary-dark)',
+                boxShadow: activeMenuTab === 'individual' ? 'var(--shadow-sm)' : 'none'
               }}
             >
               <Salad size={18} />
-              Individual Salad Plans
+              Individual Plans
             </button>
             <button
               onClick={() => setActiveMenuTab('combo')}
+              className={`btn ${activeMenuTab === 'combo' ? 'btn-primary' : 'btn-secondary'}`}
               style={{
-                padding: '12px 28px',
                 borderRadius: 'var(--radius-full)',
+                padding: '10px 24px',
+                fontSize: '14px',
                 border: 'none',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: '15px',
-                transition: 'var(--transition-smooth)',
-                backgroundColor: activeMenuTab === 'combo' ? 'var(--primary)' : 'transparent',
-                color: activeMenuTab === 'combo' ? '#ffffff' : 'var(--text-muted)',
+                fontWeight: 700,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '8px',
+                backgroundColor: activeMenuTab === 'combo' ? 'var(--primary)' : 'transparent',
+                color: activeMenuTab === 'combo' ? '#ffffff' : 'var(--primary-dark)',
+                boxShadow: activeMenuTab === 'combo' ? 'var(--shadow-sm)' : 'none'
               }}
             >
               <Tag size={18} />
@@ -102,12 +114,29 @@ const Plans = () => {
         {/* Salad Cards Grid */}
         <div className="grid-responsive">
           {filteredPlans.map((plan) => {
-            // Resolve salad items with variants
-            const resolvedItems = plan.salad_items ? plan.salad_items.map(item => {
-              const [saladId, variant] = item.split(':');
-              const salad = salads.find(s => s.id === saladId);
-              return { salad, variant };
-            }).filter(item => item.salad) : [];
+            // Resolve salad items with variants (filtering out inactive ones)
+            const resolvedItems = plan.salad_items ? plan.salad_items
+              .filter(item => isRecipeActive(item, salads))
+              .map(item => {
+                const [saladId, variant] = item.split(':');
+                
+                // Try exact match first
+                let salad = salads.find(s => s.id === item);
+                if (!salad && variant) {
+                  // Try matching variant-specific row
+                  salad = salads.find(s => {
+                    const sid = s.id.toLowerCase();
+                    const searchId = saladId.toLowerCase();
+                    const searchVar = variant.toLowerCase();
+                    return sid.startsWith(searchId) && sid.includes(searchVar);
+                  });
+                }
+                if (!salad) {
+                  // Try base match
+                  salad = salads.find(s => s.id === saladId);
+                }
+                return { salad, variant };
+              }).filter(item => item.salad) : [];
             
             // Compile unified ingredients and tags
             const compiledIngredients = Array.from(
