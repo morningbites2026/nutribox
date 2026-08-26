@@ -145,10 +145,8 @@ const AdminPanel = () => {
     }
   };
 
-  // ==========================================
-  // SALADS OPERATIONS
-  // ==========================================
   const openNewSalad = () => {
+    setEditingSaladId(null);
     setSelectedMenuItemId('');
     setSaladForm({
       title: '',
@@ -164,14 +162,48 @@ const AdminPanel = () => {
     setIsSaladFormOpen(true);
   };
 
+  const openEditSalad = (salad) => {
+    setEditingSaladId(salad.id);
+    setSelectedMenuItemId(salad.id);
+    setSaladForm({
+      title: salad.title || '',
+      description: salad.description || '',
+      variant_support: salad.variant_support || 'both',
+      price_half: salad.price_half || '',
+      price_full: salad.price_full || '',
+      image_url: salad.image_url || '',
+      ingredients_raw: salad.ingredients ? salad.ingredients.join('\n') : '',
+      tags_raw: salad.tags ? salad.tags.join(', ') : '',
+      active: salad.active !== false
+    });
+    setIsSaladFormOpen(true);
+  };
+
+  const handleDeleteSalad = async (id, title) => {
+    if (window.confirm(`Are you sure you want to delete the salad recipe: "${title}"?\nThis will automatically remove it from any Salad Plans.`)) {
+      try {
+        await deleteSalad(id);
+        triggerAlert(`Salad recipe "${title}" deleted successfully.`);
+      } catch (err) {
+        triggerAlert('Failed to delete salad.', 'error');
+      }
+    }
+  };
+
   const handleDropdownChange = (itemId) => {
     setSelectedMenuItemId(itemId);
     const item = menuItemSalads.find(m => m.id.toString() === itemId.toString());
     if (item) {
+      let ingredientsRaw = '';
+      if (item.ingredients) {
+        ingredientsRaw = Array.isArray(item.ingredients) ? item.ingredients.join('\n') : item.ingredients.toString();
+      } else if (item.description) {
+        ingredientsRaw = item.description.toString();
+      }
       setSaladForm({
         ...saladForm,
         image_url: item.image_url || item.image || '',
-        ingredients_raw: Array.isArray(item.ingredients) ? item.ingredients.join(', ') : (item.ingredients || ''),
+        ingredients_raw: ingredientsRaw,
         tags_raw: Array.isArray(item.tags) ? item.tags.join(', ') : (item.tags || ''),
         active: true
       });
@@ -180,22 +212,36 @@ const AdminPanel = () => {
 
   const handleAddSaladFromMenu = async (e) => {
     e.preventDefault();
-    if (!selectedMenuItemId) {
-      triggerAlert('Please select a salad recipe to add!', 'error');
-      return;
-    }
-    const chosenItem = menuItemSalads.find(m => m.id.toString() === selectedMenuItemId.toString());
-    if (chosenItem) {
+    if (editingSaladId) {
       try {
-        await addSaladFromMenuItem(chosenItem, {
-          ingredients_raw: saladForm.ingredients_raw,
-          tags_raw: saladForm.tags_raw,
+        await updateSalad(editingSaladId, {
+          ingredients: saladForm.ingredients_raw.split('\n').map(i => i.trim()).filter(Boolean),
+          tags: saladForm.tags_raw.split(',').map(t => t.trim()).filter(Boolean),
           image_url: saladForm.image_url,
           active: saladForm.active !== false
         });
-        triggerAlert('Salad recipe added successfully!');
+        triggerAlert('Salad recipe updated successfully!');
       } catch (err) {
-        triggerAlert('Failed to add salad recipe.', 'error');
+        triggerAlert('Failed to update salad recipe.', 'error');
+      }
+    } else {
+      if (!selectedMenuItemId) {
+        triggerAlert('Please select a salad recipe to add!', 'error');
+        return;
+      }
+      const chosenItem = menuItemSalads.find(m => m.id.toString() === selectedMenuItemId.toString());
+      if (chosenItem) {
+        try {
+          await addSaladFromMenuItem(chosenItem, {
+            ingredients_raw: saladForm.ingredients_raw,
+            tags_raw: saladForm.tags_raw,
+            image_url: saladForm.image_url,
+            active: saladForm.active !== false
+          });
+          triggerAlert('Salad recipe added successfully!');
+        } catch (err) {
+          triggerAlert('Failed to add salad recipe.', 'error');
+        }
       }
     }
     setIsSaladFormOpen(false);
@@ -569,6 +615,7 @@ const AdminPanel = () => {
                           <th>Variant Prices</th>
                           <th>Ingredients</th>
                           <th>Tags</th>
+                          <th style={{ textAlign: 'right' }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -634,11 +681,29 @@ const AdminPanel = () => {
                                 {salad.tags?.length > 2 && <span style={{ fontSize: '10px' }}>+{salad.tags.length - 2}</span>}
                               </div>
                             </td>
+                            <td style={{ textAlign: 'right' }}>
+                              <div style={{ display: 'inline-flex', gap: '8px' }}>
+                                <button 
+                                  onClick={() => openEditSalad(salad)}
+                                  style={actionBtnStyle}
+                                  title="Edit Salad"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteSalad(salad.id, salad.title)}
+                                  style={{ ...actionBtnStyle, color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.2)' }}
+                                  title="Delete Salad"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </td>
                           </tr>
                         ))}
                         {salads.length === 0 && (
                           <tr>
-                            <td colSpan="6" style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
+                            <td colSpan="7" style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
                               No salads added to showcase. Click "Add Salad" to select one.
                             </td>
                           </tr>
@@ -651,7 +716,7 @@ const AdminPanel = () => {
                 /* Showcase Salad Selection Form */
                 <form onSubmit={handleAddSaladFromMenu}>
                   <h3 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '12px' }}>
-                    Select Salad Recipe to Add
+                    {editingSaladId ? 'Edit Salad Showcase' : 'Select Salad Recipe to Add'}
                   </h3>
                   <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '24px' }}>
                     Choose a recipe from your existing menu items database (type = Salad) to showcase on the Nutribox website.
@@ -665,12 +730,13 @@ const AdminPanel = () => {
                       className="admin-input"
                       style={{ height: '45px' }}
                       required
+                      disabled={!!editingSaladId}
                     >
                       <option value="">-- Select an Active Salad --</option>
                       {(() => {
-                        const addedIds = salads.map(s => s.id.split('_')[0]); // match main item ID
+                        const addedIds = salads.map(s => s.id);
                         return menuItemSalads
-                          .filter(item => !addedIds.includes(item.id.toString()))
+                          .filter(item => editingSaladId ? item.id.toString() === selectedMenuItemId.toString() : !addedIds.includes(item.id.toString()))
                           .map(item => (
                             <option key={item.id} value={item.id}>
                               {item.name || item.title || 'Unnamed Salad'}
@@ -680,8 +746,8 @@ const AdminPanel = () => {
                     </select>
                   </div>
 
-                  {selectedMenuItemId && (() => {
-                    const chosenItem = menuItemSalads.find(m => m.id.toString() === selectedMenuItemId.toString());
+                  {(selectedMenuItemId || editingSaladId) && (() => {
+                    const chosenItem = menuItemSalads.find(m => m.id.toString() === selectedMenuItemId.toString()) || salads.find(s => s.id === editingSaladId);
                     if (!chosenItem) return null;
                     return (
                       <>
@@ -697,7 +763,7 @@ const AdminPanel = () => {
                             Detected Variants:
                           </h4>
                           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                            {chosenItem.options?.map((opt, idx) => (
+                            {Array.isArray(chosenItem.options) ? chosenItem.options.map((opt, idx) => (
                               <div key={idx} style={{
                                 backgroundColor: 'var(--card-bg)',
                                 padding: '8px 16px',
@@ -709,19 +775,33 @@ const AdminPanel = () => {
                               }}>
                                 {opt.name || opt.label || 'Regular'}: <span style={{ color: 'var(--primary)', fontWeight: 700 }}>₹{opt.price}</span>
                               </div>
-                            ))}
+                            )) : (
+                              <div style={{
+                                backgroundColor: 'var(--card-bg)',
+                                padding: '8px 16px',
+                                borderRadius: '4px',
+                                border: '1px solid var(--border-color)',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                color: 'var(--text-main)'
+                              }}>
+                                {(chosenItem.variant_support === 'half' || chosenItem.variant_support === 'both') && <span>Half Pack: ₹{chosenItem.price_half}</span>}
+                                {chosenItem.variant_support === 'both' && <span> | </span>}
+                                {(chosenItem.variant_support === 'full' || chosenItem.variant_support === 'both') && <span>Full Pack: ₹{chosenItem.price_full}</span>}
+                              </div>
+                            )}
                           </div>
                         </div>
 
                         {/* Editable Fields */}
                         <div className="admin-input-group">
-                          <label className="admin-label">Ingredients (Comma-separated list)</label>
-                          <input 
-                            type="text" 
+                          <label className="admin-label">Ingredients</label>
+                          <textarea 
                             value={saladForm.ingredients_raw}
                             onChange={(e) => setSaladForm({...saladForm, ingredients_raw: e.target.value})}
-                            placeholder="Baby Spinach, Cucumber, Tomatoes, Avocado, Feta"
-                            className="admin-input"
+                            placeholder="Enter ingredients (one per line)..."
+                            className="admin-textarea"
+                            style={{ minHeight: '120px' }}
                           />
                         </div>
 
@@ -748,7 +828,7 @@ const AdminPanel = () => {
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '20px', marginBottom: '10px' }}>
-                          <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>Default Status:</span>
+                          <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>Showcase Status:</span>
                           <button
                             type="button"
                             onClick={() => setSaladForm({...saladForm, active: saladForm.active !== false ? false : true})}
@@ -784,7 +864,7 @@ const AdminPanel = () => {
                       className="btn btn-primary"
                     >
                       <Plus size={16} />
-                      Add Salad Recipe
+                      {editingSaladId ? 'Save Changes' : 'Add Salad Recipe'}
                     </button>
                   </div>
                 </form>
