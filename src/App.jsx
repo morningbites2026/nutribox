@@ -537,9 +537,10 @@ function LandingPage() {
                   {/* Subscriptions List Container */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px', maxHeight: '380px', overflowY: 'auto', paddingRight: '4px' }}>
                     {list.map((sub, index) => {
-                      const remaining = sub.meals_remaining;
                       const total = sub.meals_total;
-                      const percent = Math.min(100, Math.max(0, (remaining / total) * 100));
+                      const remaining = sub.meals_remaining;
+                      const used = Math.max(0, total - remaining);
+                      const percent = Math.min(100, Math.max(0, (used / total) * 100));
 
                       // Custom status display
                       let statusText = 'Active';
@@ -598,8 +599,8 @@ function LandingPage() {
                             border: '1px solid rgba(16, 185, 129, 0.05)'
                           }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600, color: 'var(--primary-dark)', marginBottom: '6px' }}>
-                              <span>Meals Remaining</span>
-                              <span>{remaining} / {total} Meals</span>
+                              <span>Packs Completed</span>
+                              <span>{used} / {total} Packs Used</span>
                             </div>
 
                             {/* Bar Container */}
