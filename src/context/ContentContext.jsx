@@ -48,7 +48,10 @@ const defaultSettings = {
   samples_subtitle: 'You can also try the samples listed below. Select from our showcase recipes and order a single test pack to experience the taste and freshness before subscribing.',
   plans_badge: 'Choose Your Plan',
   plans_title: 'Salad Subscriptions Packages',
-  plans_subtitle: 'Select from our chef-curated individual or combo health-focused packages. Skip, pause, or customize delivery slots at your convenience.'
+  plans_subtitle: 'Select from our chef-curated individual or combo health-focused packages. Skip, pause, or customize delivery slots at your convenience.',
+  calc_badge: 'INTERACTIVE CALCULATOR',
+  calc_title: 'Design your meal in your own way',
+  calc_subtitle: 'Select and combine multiple pre-configured salad plans to build your custom subscription combo package. Live pricing updates instantly.'
 };
 
 const defaultSalads = [

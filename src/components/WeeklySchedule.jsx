@@ -148,7 +148,7 @@ export const MealCalculator = () => {
                 display: 'inline-block',
                 marginBottom: '16px'
               }}>
-                INTERACTIVE CALCULATOR
+                {siteSettings.calc_badge || 'INTERACTIVE CALCULATOR'}
               </span>
 
               <h2 className="font-serif" style={{
@@ -158,11 +158,11 @@ export const MealCalculator = () => {
                 marginBottom: '12px',
                 lineHeight: '1.2'
               }}>
-                Design your meal in your own way
+                {siteSettings.calc_title || 'Design your meal in your own way'}
               </h2>
               
               <p style={{ color: 'var(--text-muted)', fontSize: '15px', marginBottom: '32px', maxWidth: '640px' }}>
-                Select and combine multiple pre-configured salad plans to build your custom subscription combo package. Live pricing updates instantly.
+                {siteSettings.calc_subtitle || 'Select and combine multiple pre-configured salad plans to build your custom subscription combo package. Live pricing updates instantly.'}
               </p>
 
               {/* Plans list selection block */}

@@ -79,7 +79,10 @@ const AdminPanel = () => {
     samples_subtitle: '',
     plans_badge: '',
     plans_title: '',
-    plans_subtitle: ''
+    plans_subtitle: '',
+    calc_badge: '',
+    calc_title: '',
+    calc_subtitle: ''
   });
 
   // Initialize settings form values
@@ -106,7 +109,10 @@ const AdminPanel = () => {
         samples_subtitle: siteSettings.samples_subtitle || '',
         plans_badge: siteSettings.plans_badge || '',
         plans_title: siteSettings.plans_title || '',
-        plans_subtitle: siteSettings.plans_subtitle || ''
+        plans_subtitle: siteSettings.plans_subtitle || '',
+        calc_badge: siteSettings.calc_badge || '',
+        calc_title: siteSettings.calc_title || '',
+        calc_subtitle: siteSettings.calc_subtitle || ''
       });
     }
   }, [siteSettings]);
@@ -1199,6 +1205,48 @@ const AdminPanel = () => {
                     value={settingsForm.plans_subtitle}
                     onChange={(e) => setSettingsForm({...settingsForm, plans_subtitle: e.target.value})}
                     placeholder="Select from our chef-curated individual or combo health-focused packages. Skip, pause, or customize delivery slots at your convenience."
+                    className="admin-textarea"
+                    style={{ minHeight: '80px' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{
+                marginTop: '32px',
+                paddingTop: '24px',
+                borderTop: '1px dashed var(--border-color)',
+                marginBottom: '20px'
+              }}>
+                <h4 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--primary-dark)', marginBottom: '16px' }}>🧮 Interactive Calculator Settings</h4>
+                
+                <div className="admin-input-group">
+                  <label className="admin-label">Calculator Badge Text</label>
+                  <input 
+                    type="text" 
+                    value={settingsForm.calc_badge}
+                    onChange={(e) => setSettingsForm({...settingsForm, calc_badge: e.target.value})}
+                    placeholder="INTERACTIVE CALCULATOR"
+                    className="admin-input"
+                  />
+                </div>
+
+                <div className="admin-input-group">
+                  <label className="admin-label">Calculator Title</label>
+                  <input 
+                    type="text" 
+                    value={settingsForm.calc_title}
+                    onChange={(e) => setSettingsForm({...settingsForm, calc_title: e.target.value})}
+                    placeholder="Design your meal in your own way"
+                    className="admin-input"
+                  />
+                </div>
+
+                <div className="admin-input-group">
+                  <label className="admin-label">Calculator Subtitle / Description</label>
+                  <textarea 
+                    value={settingsForm.calc_subtitle}
+                    onChange={(e) => setSettingsForm({...settingsForm, calc_subtitle: e.target.value})}
+                    placeholder="Select and combine multiple pre-configured salad plans to build your custom subscription combo package. Live pricing updates instantly."
                     className="admin-textarea"
                     style={{ minHeight: '80px' }}
                   />
