@@ -286,17 +286,20 @@ export const ContentProvider = ({ children }) => {
                       resolvedStatus = 'done';
                     }
 
-                    mapped.push({
-                      id: `${c.id}:${cp.id}`,
-                      customer_id: c.id,
-                      customer_name: c.name,
-                      phone_number: c.phone,
-                      plan_name: pkg ? pkg.name : 'Salad Plan',
-                      meals_total: cp.total || 10,
-                      meals_remaining: remainingMeals,
-                      status: resolvedStatus,
-                      allow_tracking: c.allow_tracking === true
-                    });
+                    // Only map ongoing/active subscriptions (exclude done and cancelled)
+                    if (resolvedStatus !== 'done' && resolvedStatus !== 'cancelled') {
+                      mapped.push({
+                        id: `${c.id}:${cp.id}`,
+                        customer_id: c.id,
+                        customer_name: c.name,
+                        phone_number: c.phone,
+                        plan_name: pkg ? pkg.name : 'Salad Plan',
+                        meals_total: cp.total || 10,
+                        meals_remaining: remainingMeals,
+                        status: resolvedStatus,
+                        allow_tracking: c.allow_tracking === true
+                      });
+                    }
                   });
                 } else if (c.package_id) {
                   // Fallback for legacy customers without customer_packages rows
@@ -312,17 +315,20 @@ export const ContentProvider = ({ children }) => {
                     }
                   }
 
-                  mapped.push({
-                    id: `${c.id}:legacy`,
-                    customer_id: c.id,
-                    customer_name: c.name,
-                    phone_number: c.phone,
-                    plan_name: pkg ? pkg.name : 'Salad Plan',
-                    meals_total: c.total || 10,
-                    meals_remaining: remainingMeals,
-                    status: resolvedStatus,
-                    allow_tracking: c.allow_tracking === true
-                  });
+                  // Only map ongoing/active subscriptions (exclude done and cancelled)
+                  if (resolvedStatus !== 'done' && resolvedStatus !== 'cancelled') {
+                    mapped.push({
+                      id: `${c.id}:legacy`,
+                      customer_id: c.id,
+                      customer_name: c.name,
+                      phone_number: c.phone,
+                      plan_name: pkg ? pkg.name : 'Salad Plan',
+                      meals_total: c.total || 10,
+                      meals_remaining: remainingMeals,
+                      status: resolvedStatus,
+                      allow_tracking: c.allow_tracking === true
+                    });
+                  }
                 }
               });
               setSubscriptions(mapped);

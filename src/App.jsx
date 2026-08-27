@@ -484,7 +484,7 @@ function LandingPage() {
                 </div>
                 
                 <h3 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '8px' }}>
-                  No Subscription Found
+                  No Active Subscription Found
                 </h3>
                 <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '24px', lineHeight: '1.6' }}>
                   We couldn't locate any active subscriptions registered with <strong>{phoneInput}</strong>. 
