@@ -341,3 +341,23 @@ h1, h2, h3, h4 {
     font-size: 28px !important;
   }
 }
+
+/* Mobile Track My Subscription Button Wrapper */
+.mobile-tracker-trigger-wrapper {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .mobile-tracker-trigger-wrapper {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    padding: 16px 24px;
+    background-color: var(--bg-color);
+    margin-top: 100px; /* Offset fixed Navbar height */
+    margin-bottom: -60px; /* Reduce gap before Hero starts */
+    position: relative;
+    z-index: 10;
+  }
+}
+
