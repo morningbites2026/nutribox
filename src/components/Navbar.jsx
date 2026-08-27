@@ -184,18 +184,31 @@ const Navbar = () => {
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '12px',
+          gap: '8px',
         }} className="mobile-menu-toggle">
-          {siteSettings.social_whatsapp && (
-            <a href={getCleanWhatsappLink()} target="_blank" rel="noreferrer" style={iconBtnStyle} title="WhatsApp" className="mobile-only-btn">
-              <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)' }}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-            </a>
-          )}
-          {siteSettings.social_instagram && (
-            <a href={siteSettings.social_instagram} target="_blank" rel="noreferrer" style={iconBtnStyle} title="Instagram" className="mobile-only-btn">
-              <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--accent)' }}><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-            </a>
-          )}
+          {/* Direct Mobile Tracker Trigger */}
+          <button 
+            onClick={() => setActiveTrackerOpen(true)}
+            style={{
+              backgroundColor: 'var(--primary)',
+              color: '#ffffff',
+              border: 'none',
+              padding: '6px 12px',
+              borderRadius: 'var(--radius-full)',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: 'var(--shadow-sm)',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            Track Plan
+          </button>
+
           <button onClick={toggleTheme} style={iconBtnStyle} title="Toggle Theme" className="mobile-only-btn">
             {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
           </button>
