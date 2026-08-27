@@ -4,7 +4,7 @@ import { Sun, Moon, Menu, X, Leaf } from 'lucide-react';
 import { useContent } from '../context/ContentContext';
 
 const Navbar = () => {
-  const { siteSettings } = useContent();
+  const { siteSettings, setActiveTrackerOpen } = useContent();
   const [theme, setTheme] = useState(localStorage.getItem('nutribox_theme') || 'light');
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -143,6 +143,26 @@ const Navbar = () => {
           <a href="#plans" onClick={(e) => handleNavClick(e, 'plans')} style={navLinkStyle}>Our Plans</a>
           <a href="#contact" onClick={(e) => handleNavClick(e, 'contact')} style={navLinkStyle}>Contact</a>
           
+          <button 
+            onClick={() => setActiveTrackerOpen(true)}
+            style={{
+              backgroundColor: 'var(--primary)',
+              color: '#ffffff',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: 'var(--radius-full)',
+              fontSize: '13px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              marginLeft: '8px',
+              transition: 'var(--transition-smooth)'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--primary-dark)'}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--primary)'}
+          >
+            Track My Subscription
+          </button>
+          
           <div style={{ display: 'flex', gap: '8px', borderLeft: '1px solid var(--border-color)', paddingLeft: '20px' }}>
             {siteSettings.social_whatsapp && (
               <a href={getCleanWhatsappLink()} target="_blank" rel="noreferrer" style={iconBtnStyle} title="WhatsApp">
@@ -204,6 +224,27 @@ const Navbar = () => {
           <a href="#hero" onClick={(e) => handleNavClick(e, 'hero')} style={mobileNavLinkStyle}>Home</a>
           <a href="#plans" onClick={(e) => handleNavClick(e, 'plans')} style={mobileNavLinkStyle}>Our Plans</a>
           <a href="#contact" onClick={(e) => handleNavClick(e, 'contact')} style={mobileNavLinkStyle}>Contact</a>
+          <button 
+            onClick={() => {
+              setIsOpen(false);
+              setActiveTrackerOpen(true);
+            }}
+            style={{
+              backgroundColor: 'var(--primary)',
+              color: '#ffffff',
+              border: 'none',
+              padding: '12px',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: '14px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              width: '100%',
+              marginTop: '10px',
+              textAlign: 'center'
+            }}
+          >
+            Track My Subscription
+          </button>
         </div>
       )}
 

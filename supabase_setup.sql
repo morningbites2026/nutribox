@@ -128,3 +128,23 @@ CREATE POLICY "Allow public write on site_settings" ON site_settings FOR ALL USI
 CREATE POLICY "Allow public write on salads" ON salads FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow public write on salad_plans" ON salad_plans FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow public write on inquiries" ON inquiries FOR ALL USING (true) WITH CHECK (true);
+
+-- 9. Subscriptions Tracking Table and Policies
+CREATE TABLE IF NOT EXISTS customer_subscriptions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    phone_number TEXT UNIQUE NOT NULL,
+    customer_name TEXT NOT NULL,
+    plan_name TEXT NOT NULL,
+    meals_total INTEGER NOT NULL DEFAULT 10,
+    meals_remaining INTEGER NOT NULL DEFAULT 10,
+    status TEXT NOT NULL DEFAULT 'active',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
+);
+
+ALTER TABLE customer_subscriptions ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow public read on subscriptions" ON customer_subscriptions;
+DROP POLICY IF EXISTS "Allow public write on subscriptions" ON customer_subscriptions;
+
+CREATE POLICY "Allow public read on subscriptions" ON customer_subscriptions FOR SELECT USING (true);
+CREATE POLICY "Allow public write on subscriptions" ON customer_subscriptions FOR ALL USING (true) WITH CHECK (true);

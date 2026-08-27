@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { X, Send, PhoneCall } from 'lucide-react';
+import { X, Send, PhoneCall, AlertTriangle } from 'lucide-react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import WeeklySchedule, { MealCalculator } from './components/WeeklySchedule';
@@ -13,12 +13,18 @@ function LandingPage() {
   const { 
     activeSubscribePlan, setActiveSubscribePlan, 
     activeDialerPhones, setActiveDialerPhones, 
-    saladPlans, siteSettings, recordInquiry
+    saladPlans, siteSettings, recordInquiry,
+    activeTrackerOpen, setActiveTrackerOpen,
+    subscriptions
   } = useContent();
 
   const [selectedPlan, setSelectedPlan] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [queryMessage, setQueryMessage] = useState('Hi, I am interested in subscribing to this salad plan! Please let me know the daily delivery slots and payment details.');
+
+  // Tracker state variables
+  const [phoneInput, setPhoneInput] = useState('');
+  const [trackerResult, setTrackerResult] = useState(null); // null, 'not_found', or subscription object
 
   // Sync selected dropdown plan with the plan clicked by user
   useEffect(() => {
@@ -63,6 +69,34 @@ function LandingPage() {
     const cleanNum = num.replace(/[^\d+]/g, '');
     window.location.href = `tel:${cleanNum}`;
     setActiveDialerPhones(null); // Close modal
+  };
+
+  const handleTrackerSearch = (e) => {
+    e.preventDefault();
+    if (!phoneInput.trim()) return;
+
+    const cleanedInput = phoneInput.replace(/[^\d]/g, '');
+    if (cleanedInput.length < 8) {
+      alert('Please enter a valid mobile number (at least 8 digits).');
+      return;
+    }
+
+    const match = subscriptions.find(sub => {
+      const cleanedSubPhone = sub.phone_number.replace(/[^\d]/g, '');
+      return cleanedSubPhone.includes(cleanedInput) || cleanedInput.includes(cleanedSubPhone);
+    });
+
+    if (match) {
+      setTrackerResult(match);
+    } else {
+      setTrackerResult('not_found');
+    }
+  };
+
+  const closeTracker = () => {
+    setActiveTrackerOpen(false);
+    setPhoneInput('');
+    setTrackerResult(null);
   };
 
   return (
@@ -303,6 +337,276 @@ function LandingPage() {
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* GLOBAL MODAL 3: Subscription Tracker Modal */}
+      {activeTrackerOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1500,
+          padding: '20px',
+          animation: 'fadeIn 0.25s ease-out'
+        }}>
+          <div className="glass-card" style={{
+            maxWidth: '460px',
+            width: '100%',
+            padding: '32px',
+            position: 'relative',
+            textAlign: 'left',
+            animation: 'fadeInUp 0.3s ease-out'
+          }}>
+            {/* Close Button */}
+            <button 
+              onClick={closeTracker}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                padding: '4px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'var(--transition-smooth)'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--primary-light)'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              <X size={20} />
+            </button>
+
+            {/* SCREEN 1: Search Form */}
+            {!trackerResult && (
+              <form onSubmit={handleTrackerSearch}>
+                <h3 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--primary-dark)', marginBottom: '8px' }}>
+                  Track My Subscription
+                </h3>
+                <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '24px' }}>
+                  Enter your registered mobile number below to see your ongoing plans, meals count, and active subscription status.
+                </p>
+
+                <div className="admin-input-group" style={{ marginBottom: '24px' }}>
+                  <label className="admin-label" style={{ fontWeight: 600 }}>Mobile Number *</label>
+                  <input 
+                    type="tel" 
+                    value={phoneInput}
+                    onChange={(e) => setPhoneInput(e.target.value)}
+                    placeholder="e.g. +91 94299 29822"
+                    className="admin-input"
+                    style={{ width: '100%' }}
+                    required
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '16px' }}>
+                  <button 
+                    type="button" 
+                    onClick={closeTracker}
+                    className="btn btn-secondary"
+                    style={{ flex: 1, padding: '12px' }}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary"
+                    style={{ flex: 1, padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  >
+                    Track Status
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* SCREEN 2: Not Found */}
+            {trackerResult === 'not_found' && (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  color: 'var(--danger)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '16px'
+                }}>
+                  <AlertTriangle size={32} />
+                </div>
+                
+                <h3 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '8px' }}>
+                  No Subscription Found
+                </h3>
+                <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '24px', lineHeight: '1.6' }}>
+                  We couldn't locate any active subscriptions registered with <strong>{phoneInput}</strong>. 
+                  Please check the number or message us on WhatsApp to register your plan.
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <button 
+                    type="button" 
+                    onClick={() => { setTrackerResult(null); setPhoneInput(''); }}
+                    className="btn btn-primary"
+                    style={{ padding: '12px' }}
+                  >
+                    Try Another Number
+                  </button>
+                  
+                  {/* WhatsApp Support Link */}
+                  {(() => {
+                    const rawNum = siteSettings.social_whatsapp || '+91 94299 29822';
+                    const cleanNum = rawNum.replace(/[^\d]/g, '');
+                    const message = encodeURIComponent(`Hi, I tried to track my salad subscription with number ${phoneInput} but it wasn't found. Can you please check my registration?`);
+                    return (
+                      <a 
+                        href={`https://wa.me/${cleanNum}?text=${message}`}
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="btn btn-secondary"
+                        style={{ 
+                          padding: '12px', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          gap: '8px',
+                          borderColor: 'var(--primary)',
+                          color: 'var(--primary)',
+                          backgroundColor: 'var(--primary-light)'
+                        }}
+                      >
+                        Contact Support on WhatsApp
+                      </a>
+                    );
+                  })()}
+
+                  <button 
+                    type="button" 
+                    onClick={closeTracker}
+                    className="btn btn-secondary"
+                    style={{ padding: '10px' }}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* SCREEN 3: Subscriber Details found */}
+            {trackerResult && trackerResult !== 'not_found' && (() => {
+              const sub = trackerResult;
+              const remaining = sub.meals_remaining;
+              const total = sub.meals_total;
+              const percent = Math.min(100, Math.max(0, (remaining / total) * 100));
+              
+              return (
+                <div>
+                  <h3 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--primary-dark)', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+                    Subscription Details
+                  </h3>
+
+                  {/* Customer Information Grid */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                      <span style={{ color: 'var(--text-muted)' }}>Customer Name:</span>
+                      <strong style={{ color: 'var(--text-main)' }}>{sub.customer_name}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                      <span style={{ color: 'var(--text-muted)' }}>Registered Phone:</span>
+                      <strong style={{ color: 'var(--text-main)' }}>{sub.phone_number}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                      <span style={{ color: 'var(--text-muted)' }}>Current Plan:</span>
+                      <strong style={{ color: 'var(--primary)' }}>{sub.plan_name}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px' }}>
+                      <span style={{ color: 'var(--text-muted)' }}>Status:</span>
+                      <span className="badge" style={{
+                        fontSize: '10px',
+                        padding: '4px 10px',
+                        fontWeight: 700,
+                        backgroundColor: sub.status === 'active' ? 'var(--primary-light)' : '#f3f4f6',
+                        color: sub.status === 'active' ? 'var(--primary)' : '#6b7280'
+                      }}>
+                        {sub.status === 'active' ? 'Active' : 'Paused'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar Display */}
+                  <div style={{ 
+                    backgroundColor: 'var(--primary-light)', 
+                    padding: '20px', 
+                    borderRadius: 'var(--radius-sm)', 
+                    border: '1px solid rgba(16, 185, 129, 0.1)',
+                    marginBottom: '28px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 600, color: 'var(--primary-dark)', marginBottom: '8px' }}>
+                      <span>Remaining Meals</span>
+                      <span>{remaining} / {total} Meals</span>
+                    </div>
+
+                    {/* Bar Container */}
+                    <div style={{
+                      width: '100%',
+                      height: '14px',
+                      backgroundColor: 'rgba(0, 0, 0, 0.06)',
+                      borderRadius: '10px',
+                      overflow: 'hidden',
+                      position: 'relative'
+                    }}>
+                      <div style={{
+                        width: `${percent}%`,
+                        height: '100%',
+                        backgroundColor: 'var(--primary)',
+                        borderRadius: '10px',
+                        transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                      }} />
+                    </div>
+
+                    {/* Progress Percentage Text */}
+                    <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px', textAlign: 'right' }}>
+                      {percent.toFixed(0)}% of meals remaining
+                    </span>
+                  </div>
+
+                  {/* Actions */}
+                  <div style={{ display: 'flex', gap: '16px' }}>
+                    <button 
+                      type="button" 
+                      onClick={() => { setTrackerResult(null); setPhoneInput(''); }}
+                      className="btn btn-secondary"
+                      style={{ flex: 1, padding: '12px' }}
+                    >
+                      Track Another
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={closeTracker}
+                      className="btn btn-primary"
+                      style={{ flex: 1, padding: '12px' }}
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
