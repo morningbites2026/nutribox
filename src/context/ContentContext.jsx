@@ -45,7 +45,10 @@ const defaultSettings = {
   showcase_plans: '', // Comma-separated plan IDs to showcase on frontend
   samples_badge: 'Sample Packs',
   samples_title: 'Do you want to try a sample pack?',
-  samples_subtitle: 'You can also try the samples listed below. Select from our showcase recipes and order a single test pack to experience the taste and freshness before subscribing.'
+  samples_subtitle: 'You can also try the samples listed below. Select from our showcase recipes and order a single test pack to experience the taste and freshness before subscribing.',
+  plans_badge: 'Choose Your Plan',
+  plans_title: 'Salad Subscriptions Packages',
+  plans_subtitle: 'Select from our chef-curated individual or combo health-focused packages. Skip, pause, or customize delivery slots at your convenience.'
 };
 
 const defaultSalads = [

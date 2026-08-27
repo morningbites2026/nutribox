@@ -76,7 +76,10 @@ const AdminPanel = () => {
     calculator_featured_plans: '',
     samples_badge: '',
     samples_title: '',
-    samples_subtitle: ''
+    samples_subtitle: '',
+    plans_badge: '',
+    plans_title: '',
+    plans_subtitle: ''
   });
 
   // Initialize settings form values
@@ -100,7 +103,10 @@ const AdminPanel = () => {
         calculator_featured_plans: siteSettings.calculator_featured_plans || '',
         samples_badge: siteSettings.samples_badge || '',
         samples_title: siteSettings.samples_title || '',
-        samples_subtitle: siteSettings.samples_subtitle || ''
+        samples_subtitle: siteSettings.samples_subtitle || '',
+        plans_badge: siteSettings.plans_badge || '',
+        plans_title: siteSettings.plans_title || '',
+        plans_subtitle: siteSettings.plans_subtitle || ''
       });
     }
   }, [siteSettings]);
@@ -1151,6 +1157,48 @@ const AdminPanel = () => {
                     value={settingsForm.samples_subtitle}
                     onChange={(e) => setSettingsForm({...settingsForm, samples_subtitle: e.target.value})}
                     placeholder="You can also try the samples listed below. Select from our showcase recipes and order a single test pack to experience the taste and freshness before subscribing."
+                    className="admin-textarea"
+                    style={{ minHeight: '80px' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{
+                marginTop: '32px',
+                paddingTop: '24px',
+                borderTop: '1px dashed var(--border-color)',
+                marginBottom: '20px'
+              }}>
+                <h4 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--primary-dark)', marginBottom: '16px' }}>🥗 Salad Plans Section Settings</h4>
+                
+                <div className="admin-input-group">
+                  <label className="admin-label">Plans Section Badge</label>
+                  <input 
+                    type="text" 
+                    value={settingsForm.plans_badge}
+                    onChange={(e) => setSettingsForm({...settingsForm, plans_badge: e.target.value})}
+                    placeholder="Choose Your Plan"
+                    className="admin-input"
+                  />
+                </div>
+
+                <div className="admin-input-group">
+                  <label className="admin-label">Plans Section Title</label>
+                  <input 
+                    type="text" 
+                    value={settingsForm.plans_title}
+                    onChange={(e) => setSettingsForm({...settingsForm, plans_title: e.target.value})}
+                    placeholder="Salad Subscriptions Packages"
+                    className="admin-input"
+                  />
+                </div>
+
+                <div className="admin-input-group">
+                  <label className="admin-label">Plans Section Subtitle / Description</label>
+                  <textarea 
+                    value={settingsForm.plans_subtitle}
+                    onChange={(e) => setSettingsForm({...settingsForm, plans_subtitle: e.target.value})}
+                    placeholder="Select from our chef-curated individual or combo health-focused packages. Skip, pause, or customize delivery slots at your convenience."
                     className="admin-textarea"
                     style={{ minHeight: '80px' }}
                   />

@@ -39,7 +39,7 @@ const Plans = () => {
             letterSpacing: '1px',
             textTransform: 'uppercase'
           }}>
-            Choose Your Plan
+            {siteSettings.plans_badge || 'Choose Your Plan'}
           </span>
           <h2 className="font-serif" style={{
             fontSize: '38px',
@@ -49,10 +49,10 @@ const Plans = () => {
             marginBottom: '16px',
             lineHeight: 1.2
           }}>
-            Salad Subscriptions Packages
+            {siteSettings.plans_title || 'Salad Subscriptions Packages'}
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '15px', lineHeight: 1.6 }}>
-            Select from our chef-curated individual or combo health-focused packages. Skip, pause, or customize delivery slots at your convenience.
+            {siteSettings.plans_subtitle || 'Select from our chef-curated individual or combo health-focused packages. Skip, pause, or customize delivery slots at your convenience.'}
           </p>
         </div>
 
