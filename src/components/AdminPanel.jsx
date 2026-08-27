@@ -1751,7 +1751,7 @@ const AdminPanel = () => {
                       <th style={{ padding: '16px' }}>Customer Name</th>
                       <th style={{ padding: '16px' }}>Phone Number</th>
                       <th style={{ padding: '16px' }}>Salad Plan Name</th>
-                      <th style={{ padding: '16px', textAlign: 'center' }}>Remaining / Total Meals</th>
+                      <th style={{ padding: '16px', textAlign: 'center' }}>Packs Completed</th>
                       <th style={{ padding: '16px', textAlign: 'center' }}>Allow Frontend Tracking</th>
                     </tr>
                   </thead>
@@ -1760,7 +1760,10 @@ const AdminPanel = () => {
                       sub.customer_name?.toLowerCase().includes(subSearch.toLowerCase()) ||
                       sub.phone_number?.includes(subSearch)
                     ).map((sub) => {
-                      const percent = Math.min(100, Math.max(0, (sub.meals_remaining / sub.meals_total) * 100));
+                      const total = sub.meals_total;
+                      const remaining = sub.meals_remaining;
+                      const used = Math.max(0, total - remaining);
+                      const percent = Math.min(100, Math.max(0, (used / total) * 100));
                       return (
                         <tr key={sub.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background-color 0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--primary-light)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
                           <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-main)' }}>
@@ -1774,7 +1777,7 @@ const AdminPanel = () => {
                           </td>
                           <td style={{ padding: '16px', width: '200px', textAlign: 'center' }}>
                             <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '4px' }}>
-                              {sub.meals_remaining} / {sub.meals_total} Meals
+                              {used} / {total} Packs Used
                             </div>
                             <div style={{ width: '100%', height: '6px', backgroundColor: 'rgba(0,0,0,0.06)', borderRadius: '3px', overflow: 'hidden' }}>
                               <div style={{ width: `${percent}%`, height: '100%', backgroundColor: 'var(--primary)', borderRadius: '3px' }} />
