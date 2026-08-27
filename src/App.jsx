@@ -441,7 +441,7 @@ function LandingPage() {
                     onChange={(e) => setPhoneInput(e.target.value)}
                     placeholder="e.g. +91 94299 29822"
                     className="admin-input"
-                    style={{ width: '100%' }}
+                    style={{ width: '100%', fontSize: '16px' }}
                     required
                   />
                 </div>
@@ -554,7 +554,7 @@ function LandingPage() {
                   </h3>
 
                   {/* Customer General Info */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px', backgroundColor: '#f8fafc', padding: '14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px', backgroundColor: 'var(--bg-color)', padding: '14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
                       <span style={{ color: 'var(--text-muted)' }}>Customer Name:</span>
                       <strong style={{ color: 'var(--text-main)' }}>{customerName}</strong>
@@ -575,30 +575,30 @@ function LandingPage() {
 
                       // Custom status display
                       let statusText = 'Active';
-                      let statusBg = 'var(--primary-light)';
-                      let statusColor = 'var(--primary)';
+                      let statusBg = 'rgba(16, 185, 129, 0.12)';
+                      let statusColor = '#10b981';
 
                       if (sub.status === 'hold') {
                         statusText = 'On Hold';
-                        statusBg = '#fef3c7';
-                        statusColor = '#d97706';
+                        statusBg = 'rgba(245, 158, 11, 0.12)';
+                        statusColor = '#f59e0b';
                       } else if (sub.status === 'done') {
                         statusText = 'Done';
-                        statusBg = '#f3f4f6';
-                        statusColor = '#6b7280';
+                        statusBg = 'rgba(107, 114, 128, 0.12)';
+                        statusColor = '#9ca3af';
                       } else if (sub.status === 'low') {
                         statusText = 'Low';
-                        statusBg = '#fee2e2';
+                        statusBg = 'rgba(239, 68, 68, 0.12)';
                         statusColor = '#ef4444';
                       } else if (sub.status === 'cancelled') {
                         statusText = 'Cancelled';
-                        statusBg = '#f3f4f6';
+                        statusBg = 'rgba(156, 163, 175, 0.12)';
                         statusColor = '#9ca3af';
                       }
 
                       return (
                         <div key={sub.id || index} style={{ 
-                          backgroundColor: '#ffffff', 
+                          backgroundColor: 'var(--card-bg)', 
                           padding: '16px', 
                           borderRadius: 'var(--radius-sm)', 
                           border: '1px solid var(--border-color)',
