@@ -297,7 +297,7 @@ export const ContentProvider = ({ children }) => {
                         meals_total: cp.total || 10,
                         meals_remaining: remainingMeals,
                         status: resolvedStatus,
-                        allow_tracking: c.allow_tracking === true
+                        allow_tracking: c.allow_tracking !== false
                       });
                     }
                   });
@@ -326,7 +326,7 @@ export const ContentProvider = ({ children }) => {
                       meals_total: c.total || 10,
                       meals_remaining: remainingMeals,
                       status: resolvedStatus,
-                      allow_tracking: c.allow_tracking === true
+                      allow_tracking: c.allow_tracking !== false
                     });
                   }
                 }
@@ -808,10 +808,11 @@ export const ContentProvider = ({ children }) => {
           dbFields.allow_tracking = updatedFields.allow_tracking;
         }
 
+        const customerDbId = id.toString().split(':')[0];
         const { error } = await supabaseClient
           .from('customers')
           .update(dbFields)
-          .eq('id', id);
+          .eq('id', parseInt(customerDbId, 10));
         if (error) throw error;
       } catch (err) {
         console.error("Failed to update subscriber in Supabase:", err);
