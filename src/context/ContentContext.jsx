@@ -242,8 +242,7 @@ export const ContentProvider = ({ children }) => {
           if (!inquiriesError && inquiriesData) {
             setInquiries(inquiriesData);
           }
-
-          // Load subscriptions (joined from customers & packages tables)
+          // Load subscriptions (joined from customers, customer_packages & packages tables)
           try {
             const { data: customersData, error: customersError } = await supabaseClient
               .from('customers')
@@ -255,20 +254,76 @@ export const ContentProvider = ({ children }) => {
               .from('packages')
               .select('*');
 
+            const { data: customerPackagesData, error: customerPackagesError } = await supabaseClient
+              .from('customer_packages')
+              .select('*')
+              .neq('status', 'cancelled');
+
             if (!customersError && customersData) {
               const pkgs = packagesData || [];
-              const mapped = customersData.map(c => {
-                const pkg = pkgs.find(p => p.id === c.package_id);
-                return {
-                  id: c.id,
-                  customer_name: c.name,
-                  phone_number: c.phone,
-                  plan_name: pkg ? pkg.name : 'Salad Plan',
-                  meals_total: c.total || 10,
-                  meals_remaining: Math.max(0, (c.total || 10) - (c.used || 0)),
-                  status: c.status || 'active',
-                  allow_tracking: c.allow_tracking === true
-                };
+              const mapped = [];
+
+              customersData.forEach(c => {
+                const cPacks = customerPackagesData ? customerPackagesData.filter(cp => cp.customer_id === c.id) : [];
+
+                if (cPacks.length > 0) {
+                  // Active packages for this customer
+                  cPacks.forEach(cp => {
+                    const pkg = pkgs.find(p => p.id === cp.package_id);
+                    const remainingMeals = Math.max(0, (cp.total || 0) - (cp.used || 0));
+                    
+                    // Custom status mapping logic
+                    let resolvedStatus = cp.status || 'active';
+                    if (resolvedStatus === 'active') {
+                      if (remainingMeals === 0) {
+                        resolvedStatus = 'done';
+                      } else if (remainingMeals <= 2) {
+                        resolvedStatus = 'low';
+                      }
+                    } else if (resolvedStatus === 'hold') {
+                      resolvedStatus = 'hold';
+                    } else if (resolvedStatus === 'done') {
+                      resolvedStatus = 'done';
+                    }
+
+                    mapped.push({
+                      id: `${c.id}:${cp.id}`,
+                      customer_id: c.id,
+                      customer_name: c.name,
+                      phone_number: c.phone,
+                      plan_name: pkg ? pkg.name : 'Salad Plan',
+                      meals_total: cp.total || 10,
+                      meals_remaining: remainingMeals,
+                      status: resolvedStatus,
+                      allow_tracking: c.allow_tracking === true
+                    });
+                  });
+                } else if (c.package_id) {
+                  // Fallback for legacy customers without customer_packages rows
+                  const pkg = pkgs.find(p => p.id === c.package_id);
+                  const remainingMeals = Math.max(0, (c.total || 10) - (c.used || 0));
+                  
+                  let resolvedStatus = c.status || 'active';
+                  if (resolvedStatus === 'active') {
+                    if (remainingMeals === 0) {
+                      resolvedStatus = 'done';
+                    } else if (remainingMeals <= 2) {
+                      resolvedStatus = 'low';
+                    }
+                  }
+
+                  mapped.push({
+                    id: `${c.id}:legacy`,
+                    customer_id: c.id,
+                    customer_name: c.name,
+                    phone_number: c.phone,
+                    plan_name: pkg ? pkg.name : 'Salad Plan',
+                    meals_total: c.total || 10,
+                    meals_remaining: remainingMeals,
+                    status: resolvedStatus,
+                    allow_tracking: c.allow_tracking === true
+                  });
+                }
               });
               setSubscriptions(mapped);
             } else {

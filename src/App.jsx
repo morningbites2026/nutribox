@@ -81,15 +81,15 @@ function LandingPage() {
       return;
     }
 
-    const match = (subscriptions || []).find(sub => {
+    const matches = (subscriptions || []).filter(sub => {
       const cleanedSubPhone = (sub.phone_number || '').replace(/[^\d]/g, '');
       return cleanedSubPhone && cleanedInput && 
              (cleanedSubPhone.includes(cleanedInput) || cleanedInput.includes(cleanedSubPhone)) &&
              sub.allow_tracking === true;
     });
 
-    if (match) {
-      setTrackerResult(match);
+    if (matches.length > 0) {
+      setTrackerResult(matches);
     } else {
       setTrackerResult('not_found');
     }
@@ -510,81 +510,119 @@ function LandingPage() {
             )}
 
             {/* SCREEN 3: Subscriber Details found */}
-            {trackerResult && trackerResult !== 'not_found' && (() => {
-              const sub = trackerResult;
-              const remaining = sub.meals_remaining;
-              const total = sub.meals_total;
-              const percent = Math.min(100, Math.max(0, (remaining / total) * 100));
-              
+            {/* SCREEN 3: Subscriber Details found */}
+            {Array.isArray(trackerResult) && (() => {
+              const list = trackerResult;
+              const customerName = list[0]?.customer_name || 'Customer';
+              const phoneNumber = list[0]?.phone_number || '';
+
               return (
                 <div>
                   <h3 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--primary-dark)', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-                    Subscription Details
+                    Active Subscriptions
                   </h3>
 
-                  {/* Customer Information Grid */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
+                  {/* Customer General Info */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px', backgroundColor: '#f8fafc', padding: '14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
                       <span style={{ color: 'var(--text-muted)' }}>Customer Name:</span>
-                      <strong style={{ color: 'var(--text-main)' }}>{sub.customer_name}</strong>
+                      <strong style={{ color: 'var(--text-main)' }}>{customerName}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
                       <span style={{ color: 'var(--text-muted)' }}>Registered Phone:</span>
-                      <strong style={{ color: 'var(--text-main)' }}>{sub.phone_number}</strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Current Plan:</span>
-                      <strong style={{ color: 'var(--primary)' }}>{sub.plan_name}</strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Status:</span>
-                      <span className="badge" style={{
-                        fontSize: '10px',
-                        padding: '4px 10px',
-                        fontWeight: 700,
-                        backgroundColor: sub.status === 'active' ? 'var(--primary-light)' : '#f3f4f6',
-                        color: sub.status === 'active' ? 'var(--primary)' : '#6b7280'
-                      }}>
-                        {sub.status === 'active' ? 'Active' : 'Paused'}
-                      </span>
+                      <strong style={{ color: 'var(--text-main)' }}>{phoneNumber}</strong>
                     </div>
                   </div>
 
-                  {/* Progress Bar Display */}
-                  <div style={{ 
-                    backgroundColor: 'var(--primary-light)', 
-                    padding: '20px', 
-                    borderRadius: 'var(--radius-sm)', 
-                    border: '1px solid rgba(16, 185, 129, 0.1)',
-                    marginBottom: '28px'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 600, color: 'var(--primary-dark)', marginBottom: '8px' }}>
-                      <span>Remaining Meals</span>
-                      <span>{remaining} / {total} Meals</span>
-                    </div>
+                  {/* Subscriptions List Container */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px', maxHeight: '380px', overflowY: 'auto', paddingRight: '4px' }}>
+                    {list.map((sub, index) => {
+                      const remaining = sub.meals_remaining;
+                      const total = sub.meals_total;
+                      const percent = Math.min(100, Math.max(0, (remaining / total) * 100));
 
-                    {/* Bar Container */}
-                    <div style={{
-                      width: '100%',
-                      height: '14px',
-                      backgroundColor: 'rgba(0, 0, 0, 0.06)',
-                      borderRadius: '10px',
-                      overflow: 'hidden',
-                      position: 'relative'
-                    }}>
-                      <div style={{
-                        width: `${percent}%`,
-                        height: '100%',
-                        backgroundColor: 'var(--primary)',
-                        borderRadius: '10px',
-                        transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
-                      }} />
-                    </div>
+                      // Custom status display
+                      let statusText = 'Active';
+                      let statusBg = 'var(--primary-light)';
+                      let statusColor = 'var(--primary)';
 
-                    {/* Progress Percentage Text */}
-                    <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px', textAlign: 'right' }}>
-                      {percent.toFixed(0)}% of meals remaining
-                    </span>
+                      if (sub.status === 'hold') {
+                        statusText = 'On Hold';
+                        statusBg = '#fef3c7';
+                        statusColor = '#d97706';
+                      } else if (sub.status === 'done') {
+                        statusText = 'Done';
+                        statusBg = '#f3f4f6';
+                        statusColor = '#6b7280';
+                      } else if (sub.status === 'low') {
+                        statusText = 'Low';
+                        statusBg = '#fee2e2';
+                        statusColor = '#ef4444';
+                      } else if (sub.status === 'cancelled') {
+                        statusText = 'Cancelled';
+                        statusBg = '#f3f4f6';
+                        statusColor = '#9ca3af';
+                      }
+
+                      return (
+                        <div key={sub.id || index} style={{ 
+                          backgroundColor: '#ffffff', 
+                          padding: '16px', 
+                          borderRadius: 'var(--radius-sm)', 
+                          border: '1px solid var(--border-color)',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                            <div style={{ maxWidth: '70%' }}>
+                              <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Plan Details</span>
+                              <strong style={{ fontSize: '15px', color: 'var(--text-main)', display: 'block', wordBreak: 'break-word' }}>{sub.plan_name}</strong>
+                            </div>
+                            <span className="badge" style={{
+                              fontSize: '10px',
+                              padding: '4px 10px',
+                              fontWeight: 700,
+                              backgroundColor: statusBg,
+                              color: statusColor,
+                              textTransform: 'uppercase',
+                              borderRadius: '20px'
+                            }}>
+                              {statusText}
+                            </span>
+                          </div>
+
+                          {/* Progress Bar Display */}
+                          <div style={{ 
+                            backgroundColor: 'var(--primary-light)', 
+                            padding: '12px', 
+                            borderRadius: '6px', 
+                            border: '1px solid rgba(16, 185, 129, 0.05)'
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600, color: 'var(--primary-dark)', marginBottom: '6px' }}>
+                              <span>Meals Remaining</span>
+                              <span>{remaining} / {total} Meals</span>
+                            </div>
+
+                            {/* Bar Container */}
+                            <div style={{
+                              width: '100%',
+                              height: '10px',
+                              backgroundColor: 'rgba(0, 0, 0, 0.06)',
+                              borderRadius: '6px',
+                              overflow: 'hidden',
+                              position: 'relative'
+                            }}>
+                              <div style={{
+                                width: `${percent}%`,
+                                height: '100%',
+                                backgroundColor: statusColor,
+                                borderRadius: '6px',
+                                transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                              }} />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
 
                   {/* Actions */}
