@@ -353,7 +353,7 @@ const Plans = () => {
             letterSpacing: '1px',
             textTransform: 'uppercase'
           }}>
-            Sample Packs
+            {siteSettings.samples_badge || 'Sample Packs'}
           </span>
           <h3 className="font-serif" style={{
             fontSize: '32px',
@@ -362,10 +362,10 @@ const Plans = () => {
             marginTop: '16px',
             marginBottom: '12px'
           }}>
-            Do you want to try a sample pack?
+            {siteSettings.samples_title || 'Do you want to try a sample pack?'}
           </h3>
           <p style={{ color: 'var(--text-muted)', fontSize: '15px', maxWidth: '600px', margin: '0 auto 40px auto', lineHeight: 1.6 }}>
-            You can also try the samples listed below. Select from our showcase recipes and order a single test pack to experience the taste and freshness before subscribing.
+            {siteSettings.samples_subtitle || 'You can also try the samples listed below. Select from our showcase recipes and order a single test pack to experience the taste and freshness before subscribing.'}
           </p>
 
           <div className="grid-responsive" style={{ marginTop: '30px' }}>

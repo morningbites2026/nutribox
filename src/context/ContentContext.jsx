@@ -42,7 +42,10 @@ const defaultSettings = {
   delivery_info: 'All orders are prepared fresh at 5:00 AM each morning and dispatched for delivery in temperature-controlled boxes.',
   calculator_whatsapp: '+91 94299 29822',
   calculator_featured_plans: '', // Comma-separated plan IDs to filter display
-  showcase_plans: '' // Comma-separated plan IDs to showcase on frontend
+  showcase_plans: '', // Comma-separated plan IDs to showcase on frontend
+  samples_badge: 'Sample Packs',
+  samples_title: 'Do you want to try a sample pack?',
+  samples_subtitle: 'You can also try the samples listed below. Select from our showcase recipes and order a single test pack to experience the taste and freshness before subscribing.'
 };
 
 const defaultSalads = [

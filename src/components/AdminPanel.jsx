@@ -73,7 +73,10 @@ const AdminPanel = () => {
     footer_text: '',
     delivery_info: '',
     calculator_whatsapp: '',
-    calculator_featured_plans: ''
+    calculator_featured_plans: '',
+    samples_badge: '',
+    samples_title: '',
+    samples_subtitle: ''
   });
 
   // Initialize settings form values
@@ -94,7 +97,10 @@ const AdminPanel = () => {
         footer_text: siteSettings.footer_text || '',
         delivery_info: siteSettings.delivery_info || '',
         calculator_whatsapp: siteSettings.calculator_whatsapp || '',
-        calculator_featured_plans: siteSettings.calculator_featured_plans || ''
+        calculator_featured_plans: siteSettings.calculator_featured_plans || '',
+        samples_badge: siteSettings.samples_badge || '',
+        samples_title: siteSettings.samples_title || '',
+        samples_subtitle: siteSettings.samples_subtitle || ''
       });
     }
   }, [siteSettings]);
@@ -1107,6 +1113,48 @@ const AdminPanel = () => {
                   placeholder="admin123"
                   className="admin-input"
                 />
+              </div>
+
+              <div style={{
+                marginTop: '32px',
+                paddingTop: '24px',
+                borderTop: '1px dashed var(--border-color)',
+                marginBottom: '20px'
+              }}>
+                <h4 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--primary-dark)', marginBottom: '16px' }}>🥗 Sample Packs Section Settings</h4>
+                
+                <div className="admin-input-group">
+                  <label className="admin-label">Sample Section Badge</label>
+                  <input 
+                    type="text" 
+                    value={settingsForm.samples_badge}
+                    onChange={(e) => setSettingsForm({...settingsForm, samples_badge: e.target.value})}
+                    placeholder="Sample Packs"
+                    className="admin-input"
+                  />
+                </div>
+
+                <div className="admin-input-group">
+                  <label className="admin-label">Sample Section Title</label>
+                  <input 
+                    type="text" 
+                    value={settingsForm.samples_title}
+                    onChange={(e) => setSettingsForm({...settingsForm, samples_title: e.target.value})}
+                    placeholder="Do you want to try a sample pack?"
+                    className="admin-input"
+                  />
+                </div>
+
+                <div className="admin-input-group">
+                  <label className="admin-label">Sample Section Subtitle / Description</label>
+                  <textarea 
+                    value={settingsForm.samples_subtitle}
+                    onChange={(e) => setSettingsForm({...settingsForm, samples_subtitle: e.target.value})}
+                    placeholder="You can also try the samples listed below. Select from our showcase recipes and order a single test pack to experience the taste and freshness before subscribing."
+                    className="admin-textarea"
+                    style={{ minHeight: '80px' }}
+                  />
+                </div>
               </div>
 
               <div style={{ marginTop: '30px', borderTop: '1px solid var(--border-color)', paddingTop: '24px' }}>
