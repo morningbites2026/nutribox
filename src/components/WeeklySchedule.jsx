@@ -296,10 +296,22 @@ export const MealCalculator = () => {
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto' }}>
                     {selectedPlans.map((plan, idx) => (
-                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                        <span style={{ color: 'var(--text-main)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '180px', fontWeight: 600 }}>
-                          {plan.title}
-                        </span>
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
+                          <span style={{ color: 'var(--text-main)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '140px', fontWeight: 600 }}>
+                            {plan.title}
+                          </span>
+                          <span className="badge" style={{ 
+                            fontSize: '9px', 
+                            padding: '2px 6px', 
+                            backgroundColor: 'var(--primary-light)', 
+                            color: 'var(--primary)',
+                            fontWeight: 700,
+                            flexShrink: 0
+                          }}>
+                            {plan.meals_count} Meals
+                          </span>
+                        </div>
                         <span style={{ color: 'var(--primary)', fontWeight: 700 }}>
                           ₹{plan.price}
                         </span>

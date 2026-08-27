@@ -206,6 +206,19 @@ const Plans = () => {
                 }}>
                   {/* Tags */}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '14px' }}>
+                    {plan.meals_count && (
+                      <span 
+                        className="badge" 
+                        style={{
+                          backgroundColor: 'var(--primary)',
+                          color: '#ffffff',
+                          fontSize: '10px',
+                          fontWeight: 700
+                        }}
+                      >
+                        {plan.meals_count} Meals
+                      </span>
+                    )}
                     {compiledTags.map((tag, idx) => (
                       <span 
                         key={idx} 
