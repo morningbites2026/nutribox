@@ -243,22 +243,41 @@ export const ContentProvider = ({ children }) => {
             setInquiries(inquiriesData);
           }
 
-          // Load subscriptions
+          // Load subscriptions (joined from customers & packages tables)
           try {
-            const { data: subsData, error: subsError } = await supabaseClient
-              .from('customer_subscriptions')
+            const { data: customersData, error: customersError } = await supabaseClient
+              .from('customers')
               .select('*')
+              .eq('is_deleted', false)
               .order('created_at', { ascending: false });
-            
-            if (!subsError && subsData) {
-              setSubscriptions(subsData);
+
+            const { data: packagesData, error: packagesError } = await supabaseClient
+              .from('packages')
+              .select('*');
+
+            if (!customersError && customersData) {
+              const pkgs = packagesData || [];
+              const mapped = customersData.map(c => {
+                const pkg = pkgs.find(p => p.id === c.package_id);
+                return {
+                  id: c.id,
+                  customer_name: c.name,
+                  phone_number: c.phone,
+                  plan_name: pkg ? pkg.name : 'Salad Plan',
+                  meals_total: c.total || 10,
+                  meals_remaining: Math.max(0, (c.total || 10) - (c.used || 0)),
+                  status: c.status || 'active',
+                  allow_tracking: c.allow_tracking === true
+                };
+              });
+              setSubscriptions(mapped);
             } else {
               // Fallback to local
               const savedSubs = localStorage.getItem('nutribox_subscriptions');
               if (savedSubs) setSubscriptions(JSON.parse(savedSubs));
             }
           } catch (err) {
-            console.warn("customer_subscriptions table may not exist yet:", err);
+            console.warn("Could not load subscribers from database:", err);
             const savedSubs = localStorage.getItem('nutribox_subscriptions');
             if (savedSubs) setSubscriptions(JSON.parse(savedSubs));
           }
@@ -722,13 +741,19 @@ export const ContentProvider = ({ children }) => {
 
     if (supabaseClient && !isDemoMode) {
       try {
+        // Map database fields to customers table
+        const dbFields = {};
+        if (updatedFields.hasOwnProperty('allow_tracking')) {
+          dbFields.allow_tracking = updatedFields.allow_tracking;
+        }
+
         const { error } = await supabaseClient
-          .from('customer_subscriptions')
-          .update(updatedFields)
+          .from('customers')
+          .update(dbFields)
           .eq('id', id);
         if (error) throw error;
       } catch (err) {
-        console.error("Failed to update subscription in Supabase:", err);
+        console.error("Failed to update subscriber in Supabase:", err);
       }
     }
   };
