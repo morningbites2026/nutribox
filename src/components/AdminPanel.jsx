@@ -12,7 +12,8 @@ const AdminPanel = () => {
     siteSettings, salads, saladPlans, isDemoMode, 
     updateMultipleSettings, addSalad, updateSalad, deleteSalad,
     addSaladPlan, updateSaladPlan, deleteSaladPlan,
-    inquiries, deleteInquiry, menuItemSalads, addSaladFromMenuItem
+    inquiries, deleteInquiry, menuItemSalads, addSaladFromMenuItem,
+    subscriptions, updateSubscription
   } = useContent();
 
   const navigate = useNavigate();
@@ -58,6 +59,8 @@ const AdminPanel = () => {
   });
 
   // Settings form state
+  const [subSearch, setSubSearch] = useState('');
+  
   const [settingsForm, setSettingsForm] = useState({
     business_name: '',
     logo_url: '',
@@ -603,6 +606,18 @@ const AdminPanel = () => {
           >
             <Database size={18} />
             Cloud Database
+          </button>
+          <button 
+            onClick={() => { setActiveTab('subscriptions'); setIsPlanFormOpen(false); setIsSaladFormOpen(false); }}
+            style={{
+              ...sidebarBtnStyle,
+              backgroundColor: activeTab === 'subscriptions' ? 'var(--primary-light)' : 'transparent',
+              color: activeTab === 'subscriptions' ? 'var(--primary)' : 'var(--text-muted)',
+              fontWeight: activeTab === 'subscriptions' ? 700 : 500
+            }}
+          >
+            <Users size={18} />
+            Active Subscribers
           </button>
         </aside>
 
@@ -1700,6 +1715,98 @@ const AdminPanel = () => {
                       <tr>
                         <td colSpan="5" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic' }}>
                           No inquiries logged yet.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 8: Subscriptions Management */}
+          {activeTab === 'subscriptions' && (
+            <div>
+              <h3 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '6px' }}>Salad Subscribers</h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '24px' }}>
+                View all subscribers synced from your external platform. Control which users are authorized to track their details on the front-end.
+              </p>
+
+              {/* Search Bar */}
+              <div className="admin-input-group" style={{ marginBottom: '20px', maxWidth: '360px' }}>
+                <input 
+                  type="text" 
+                  placeholder="Search by customer name or phone..." 
+                  value={subSearch}
+                  onChange={(e) => setSubSearch(e.target.value)}
+                  className="admin-input"
+                />
+              </div>
+
+              {/* Grid Table */}
+              <div style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: 'var(--primary-light)', borderBottom: '1px solid var(--border-color)', color: 'var(--primary-dark)', textAlign: 'left' }}>
+                      <th style={{ padding: '16px' }}>Customer Name</th>
+                      <th style={{ padding: '16px' }}>Phone Number</th>
+                      <th style={{ padding: '16px' }}>Salad Plan Name</th>
+                      <th style={{ padding: '16px', textAlign: 'center' }}>Remaining / Total Meals</th>
+                      <th style={{ padding: '16px', textAlign: 'center' }}>Allow Frontend Tracking</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(subscriptions || []).filter(sub => 
+                      sub.customer_name?.toLowerCase().includes(subSearch.toLowerCase()) ||
+                      sub.phone_number?.includes(subSearch)
+                    ).map((sub) => {
+                      const percent = Math.min(100, Math.max(0, (sub.meals_remaining / sub.meals_total) * 100));
+                      return (
+                        <tr key={sub.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background-color 0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--primary-light)'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                          <td style={{ padding: '16px', fontWeight: 600, color: 'var(--text-main)' }}>
+                            {sub.customer_name}
+                          </td>
+                          <td style={{ padding: '16px', color: 'var(--text-muted)' }}>
+                            {sub.phone_number}
+                          </td>
+                          <td style={{ padding: '16px', fontWeight: 600, color: 'var(--primary)' }}>
+                            {sub.plan_name}
+                          </td>
+                          <td style={{ padding: '16px', width: '200px', textAlign: 'center' }}>
+                            <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '4px' }}>
+                              {sub.meals_remaining} / {sub.meals_total} Meals
+                            </div>
+                            <div style={{ width: '100%', height: '6px', backgroundColor: 'rgba(0,0,0,0.06)', borderRadius: '3px', overflow: 'hidden' }}>
+                              <div style={{ width: `${percent}%`, height: '100%', backgroundColor: 'var(--primary)', borderRadius: '3px' }} />
+                            </div>
+                          </td>
+                          <td style={{ padding: '16px', textAlign: 'center' }}>
+                            <input 
+                              type="checkbox"
+                              checked={sub.allow_tracking === true}
+                              onChange={async () => {
+                                try {
+                                  await updateSubscription(sub.id, { allow_tracking: !sub.allow_tracking });
+                                  triggerAlert(`Updated tracking status for ${sub.customer_name}.`);
+                                } catch (err) {
+                                  triggerAlert("Failed to update tracking status.", "error");
+                                }
+                              }}
+                              style={{
+                                width: '20px',
+                                height: '20px',
+                                accentColor: 'var(--primary)',
+                                cursor: 'pointer'
+                              }}
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {(subscriptions || []).length === 0 && (
+                      <tr>
+                        <td colSpan="5" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                          No subscribers found in database.
                         </td>
                       </tr>
                     )}

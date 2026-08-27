@@ -690,6 +690,7 @@ export const ContentProvider = ({ children }) => {
       meals_total: parseInt(sub.meals_total, 10) || 10,
       meals_remaining: parseInt(sub.meals_remaining, 10) || 10,
       status: sub.status || 'active',
+      allow_tracking: sub.allow_tracking === true,
       created_at: sub.created_at || new Date().toISOString()
     };
 

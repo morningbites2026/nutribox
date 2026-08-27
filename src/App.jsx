@@ -83,7 +83,9 @@ function LandingPage() {
 
     const match = (subscriptions || []).find(sub => {
       const cleanedSubPhone = (sub.phone_number || '').replace(/[^\d]/g, '');
-      return cleanedSubPhone && cleanedInput && (cleanedSubPhone.includes(cleanedInput) || cleanedInput.includes(cleanedSubPhone));
+      return cleanedSubPhone && cleanedInput && 
+             (cleanedSubPhone.includes(cleanedInput) || cleanedInput.includes(cleanedSubPhone)) &&
+             sub.allow_tracking === true;
     });
 
     if (match) {

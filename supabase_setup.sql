@@ -138,6 +138,7 @@ CREATE TABLE IF NOT EXISTS customer_subscriptions (
     meals_total INTEGER NOT NULL DEFAULT 10,
     meals_remaining INTEGER NOT NULL DEFAULT 10,
     status TEXT NOT NULL DEFAULT 'active',
+    allow_tracking BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
 );
 
